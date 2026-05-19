@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { COLORS, subCategoryData, LABELS } from '../data.js';
 
 export default function Interactive3DChart({ isFullscreen = false }) {
@@ -206,9 +206,9 @@ export default function Interactive3DChart({ isFullscreen = false }) {
 
   if (!threeLoaded) {
     return (
-      <div className="h-full w-full bg-slate-900 rounded-2xl flex items-center justify-center text-white min-h-[500px]">
+      <div className="h-full w-full bg-inverse-surface rounded-none flex items-center justify-center text-on-primary min-h-[500px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-lg">{LABELS.loading3d}</p>
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function Interactive3DChart({ isFullscreen = false }) {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[450px] bg-slate-900 rounded-2xl overflow-hidden shadow-inner border border-slate-800">
+    <div ref={containerRef} className="relative w-full h-full min-h-[450px] bg-inverse-surface rounded-none overflow-hidden shadow-inner border border-outline-variant/30">
       <canvas ref={canvasRef} className="block w-full h-full cursor-grab active:cursor-grabbing" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {projectedLabels.map((lbl) => {
@@ -227,20 +227,20 @@ export default function Interactive3DChart({ isFullscreen = false }) {
               className="absolute -translate-x-1/2 -translate-y-full flex flex-col items-center select-none"
               style={{ left: `${lbl.x}px`, top: `${lbl.y - 12}px` }}
             >
-              <div className="bg-white/95 border shadow-md px-2.5 py-1 rounded-t-md border-slate-200">
-                <span className="text-[10px] font-extrabold text-slate-800 whitespace-nowrap">{lbl.name}</span>
+              <div className="bg-surface-container-lowest/95 border shadow-md px-2.5 py-1 rounded-t-md border-outline-variant/20">
+                <span className="text-[10px] font-extrabold text-on-surface whitespace-nowrap">{lbl.name}</span>
               </div>
-              <div className="bg-slate-800 text-white text-[9px] px-2 py-1 rounded-b-md font-semibold border-t border-slate-700">
+              <div className="bg-inverse-surface text-on-primary text-[9px] px-2 py-1 rounded-b-md font-semibold border-t border-outline-variant/40">
                 {lbl.sla} {LABELS.dayShort} | {lbl.families} {LABELS.familiesShort}
               </div>
-              <div className="w-1.5 h-1.5 rotate-45 border-r border-b border-slate-300 bg-slate-800 -mt-0.5"></div>
+              <div className="w-1.5 h-1.5 rotate-45 border-r border-b border-outline-variant/30 bg-inverse-surface -mt-0.5"></div>
             </div>
           );
         })}
       </div>
 
-      <div className="absolute bottom-4 right-4 bg-slate-950/80 backdrop-blur-md p-3 rounded-xl text-xs text-slate-300 space-y-1.5 border border-slate-800" dir="rtl">
-        <div className="font-bold text-slate-200 border-b border-slate-800 pb-1 mb-1">{LABELS.axisLegendTitle}</div>
+      <div className="absolute bottom-4 right-4 bg-inverse-surface/80 backdrop-blur-md p-3 rounded-none text-xs text-outline-variant space-y-1.5 border border-outline-variant/30" dir="rtl">
+        <div className="font-bold text-on-primary border-b border-outline-variant/30 pb-1 mb-1">{LABELS.axisLegendTitle}</div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-0.5 bg-red-500"></div>
           <span>{LABELS.axisX}</span>
@@ -253,30 +253,30 @@ export default function Interactive3DChart({ isFullscreen = false }) {
           <div className="w-3 h-0.5 bg-blue-500"></div>
           <span>{LABELS.axisZ}</span>
         </div>
-        <div className="text-[10px] text-slate-400 border-t border-slate-800 pt-1 mt-1 font-medium">
+        <div className="text-[10px] text-outline-variant border-t border-outline-variant/30 pt-1 mt-1 font-medium">
           {LABELS.axisHint}
         </div>
       </div>
 
       {hoveredPoint && (
-        <div className="absolute top-4 left-4 bg-slate-950/90 backdrop-blur-md p-4 rounded-xl text-right min-w-[220px] border border-indigo-500/30 shadow-lg shadow-indigo-500/10 transition-all duration-150" dir="rtl">
-          <p className="font-extrabold text-slate-100 text-sm mb-1">{hoveredPoint.sub}</p>
+        <div className="absolute top-4 left-4 bg-inverse-surface/90 backdrop-blur-md p-4 rounded-none text-right min-w-[220px] border border-primary/30 shadow-lg shadow-primary/10 transition-all duration-150" dir="rtl">
+          <p className="font-extrabold text-on-primary text-sm mb-1">{hoveredPoint.sub}</p>
           <p className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color: COLORS[hoveredPoint.main] }}>
             <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: COLORS[hoveredPoint.main] }}></span>
             {hoveredPoint.main}
           </p>
-          <div className="space-y-1.5 border-t border-slate-800 pt-2 text-xs">
-            <div className="flex justify-between text-slate-400">
+          <div className="space-y-1.5 border-t border-outline-variant/30 pt-2 text-xs">
+            <div className="flex justify-between text-outline-variant">
               <span>{LABELS.hoverX}</span>
-              <span className="font-bold text-slate-200">{hoveredPoint.families} {LABELS.families}</span>
+              <span className="font-bold text-on-primary">{hoveredPoint.families} {LABELS.families}</span>
             </div>
-            <div className="flex justify-between text-slate-400">
+            <div className="flex justify-between text-outline-variant">
               <span>{LABELS.hoverY}</span>
-              <span className="font-bold text-slate-200">{hoveredPoint.sla} {LABELS.days}</span>
+              <span className="font-bold text-on-primary">{hoveredPoint.sla} {LABELS.days}</span>
             </div>
-            <div className="flex justify-between text-slate-400">
+            <div className="flex justify-between text-outline-variant">
               <span>{LABELS.hoverZ}</span>
-              <span className="font-bold text-slate-200">{hoveredPoint.tasks} {LABELS.inquiries}</span>
+              <span className="font-bold text-on-primary">{hoveredPoint.tasks} {LABELS.inquiries}</span>
             </div>
           </div>
         </div>

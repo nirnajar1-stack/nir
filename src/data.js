@@ -9,7 +9,7 @@ export const COLORS = {
   'פנאי ושונות': '#F59E0B',
 };
 
-export const BRAND_CHART_COLORS = ['#004795', '#FFC107', '#002855', '#FF8F00', '#16a34a', '#4b5563'];
+export const BRAND_CHART_COLORS = ['#4f5e7f', '#af3030', '#445272', '#596067', '#9f403d', '#787c75'];
 
 export const LABELS = {
   all: 'הכל',

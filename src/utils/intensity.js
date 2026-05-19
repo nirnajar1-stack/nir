@@ -3,7 +3,7 @@ export function getIntensityClassification(families, tasks) {
     return {
       label: '\u05dc\u05dc\u05d0 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea',
       ratio: '\u2014',
-      color: 'bg-slate-100 text-slate-500 border-slate-200',
+      color: 'bg-surface-container text-on-surface-variant border-outline-variant/30',
       desc: '\u05d0\u05d9\u05df \u05e0\u05ea\u05d5\u05e0\u05d9 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea \u05d1\u05ea\u05e7\u05d5\u05e4\u05d4.',
     };
   }

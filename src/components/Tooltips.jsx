@@ -1,24 +1,24 @@
 import React from 'react';
 import { COLORS, LABELS } from '../data.js';
 
-const tooltipBase = 'bg-white/95 backdrop-blur-md p-4 border border-slate-100 shadow-xl rounded-xl text-right';
+const tooltipBase = 'bg-surface-container-lowest/95 backdrop-blur-md p-4 border border-outline-variant/15 shadow-xl rounded-none text-right';
 
 export const CustomTooltipMain = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
   return (
     <div className={`${tooltipBase} min-w-[180px]`} dir="rtl">
-      <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+      <div className="flex items-center gap-2 mb-3 border-b border-outline-variant/15 pb-2">
         <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[data.category] }} />
-        <p className="font-bold text-slate-800">{data.category}</p>
+        <p className="font-bold text-on-surface">{data.category}</p>
       </div>
-      <p className="text-sm text-slate-600 mb-1 flex justify-between gap-4">
+      <p className="text-sm text-on-surface-variant mb-1 flex justify-between gap-4">
         <span>משפחות מלווות:</span>
-        <span className="font-bold text-slate-800">{data.families}</span>
+        <span className="font-bold text-on-surface">{data.families}</span>
       </p>
-      <p className="text-sm text-slate-600 flex justify-between gap-4">
+      <p className="text-sm text-on-surface-variant flex justify-between gap-4">
         <span>זמן טיפול ממוצע:</span>
-        <span className="font-bold text-slate-800">{data.avgSla} ימ׳</span>
+        <span className="font-bold text-on-surface">{data.avgSla} ימ׳</span>
       </p>
     </div>
   );
@@ -29,23 +29,23 @@ export const CustomTooltipSub = ({ active, payload }) => {
   const data = payload[0].payload;
   return (
     <div className={`${tooltipBase} min-w-[200px]`} dir="rtl">
-      <p className="font-bold text-slate-800 mb-1">{data.sub}</p>
-      <p className="text-xs text-slate-500 font-medium mb-3 border-b border-slate-100 pb-2 flex items-center gap-2">
+      <p className="font-bold text-on-surface mb-1">{data.sub}</p>
+      <p className="text-xs text-on-surface-variant font-medium mb-3 border-b border-outline-variant/15 pb-2 flex items-center gap-2">
         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[data.main] }} />
         {data.main}
       </p>
-      <p className="text-sm text-slate-600 mb-1 flex justify-between gap-4">
+      <p className="text-sm text-on-surface-variant mb-1 flex justify-between gap-4">
         <span>תפוצה:</span>
-        <span className="font-bold text-slate-800">{data.families} משפחות</span>
+        <span className="font-bold text-on-surface">{data.families} משפחות</span>
       </p>
-      <p className="text-sm text-slate-600 mb-1 flex justify-between gap-4">
+      <p className="text-sm text-on-surface-variant mb-1 flex justify-between gap-4">
         <span>מאמץ (SLA):</span>
-        <span className="font-bold text-slate-800">{data.sla} ימים</span>
+        <span className="font-bold text-on-surface">{data.sla} ימים</span>
       </p>
       {data.tasks != null && (
-        <p className="text-sm text-slate-600 flex justify-between gap-4">
+        <p className="text-sm text-on-surface-variant flex justify-between gap-4">
           <span>משימות:</span>
-          <span className="font-bold text-slate-800">{data.tasks}</span>
+          <span className="font-bold text-on-surface">{data.tasks}</span>
         </p>
       )}
     </div>
