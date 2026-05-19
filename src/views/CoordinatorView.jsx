@@ -186,7 +186,7 @@ export default function CoordinatorView({ page = 'overview' }) {
       <style>{brandStyles}</style>
       <div className="font-assistant">
         {page === 'overview' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-4">
             <div className="mb-4 flex items-center gap-2">
                 <SectionIcon name="insights" />
                 <div>

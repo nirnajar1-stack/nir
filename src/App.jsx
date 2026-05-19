@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { getPageMeta } from './navigation.js';
 import { useHashPage } from './hooks/useHashPage.js';
 import AnalyticsView from './views/AnalyticsView.jsx';
@@ -11,8 +12,15 @@ import ZenFooter from './components/layout/ZenFooter.jsx';
 import Breadcrumbs from './components/layout/Breadcrumbs.jsx';
 import PageKpis from './components/layout/PageKpis.jsx';
 import CategoryLegend from './components/charts/CategoryLegend.jsx';
+import PageTransition, { pageItemVariants } from './components/layout/PageTransition.jsx';
 
 const DATA_UPDATED = '19.05.2026';
+
+function renderPageContent(group, sub) {
+  if (group === 'analytics' && sub === 'methodology') return <MethodologyView />;
+  if (group === 'analytics') return <AnalyticsView page={sub} />;
+  return <CoordinatorView page={sub} />;
+}
 
 export default function App() {
   const [activePage, setActivePage] = useHashPage();
@@ -20,7 +28,7 @@ export default function App() {
   const { group, sub, pageLabel, subtitle } = getPageMeta(activePage);
 
   return (
-    <div className="min-h-screen bg-background text-on-background font-body" dir="rtl">
+    <motion.div className="min-h-screen bg-background text-on-background font-body" dir="rtl">
       <a href="#main-content" className="zen-skip-link">
         דלג לתוכן
       </a>
@@ -35,38 +43,44 @@ export default function App() {
       <ZenHeader onMenuOpen={() => setMobileNavOpen(true)} />
 
       <main id="main-content" className="mr-0 min-h-screen lg:mr-72">
-        <div className="px-4 pb-12 pt-20 md:px-8 md:pt-24 lg:px-12">
+        <motion.div className="px-4 pb-12 pt-20 md:px-8 md:pt-24 lg:px-12">
           <NewsTicker />
 
-          <Breadcrumbs activePage={activePage} />
+          <PageTransition pageKey={group} className="page-shell">
+            <motion.div variants={pageItemVariants}>
+              <Breadcrumbs activePage={activePage} />
+            </motion.div>
 
-          <header className="mb-6 max-w-3xl">
-            <h1 className="text-2xl font-medium tracking-tight text-on-surface md:text-[1.75rem]">{pageLabel}</h1>
-            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{subtitle}</p>
-            <p className="mt-1 text-xs text-outline-variant">
-              עודכן לאחרונה: {DATA_UPDATED}
-            </p>
-          </header>
+            <PageTransition pageKey={activePage}>
+              <motion.header variants={pageItemVariants} className="mb-6 max-w-3xl">
+                <h1 className="text-2xl font-medium tracking-tight text-on-surface md:text-[1.75rem]">
+                  {pageLabel}
+                </h1>
+                <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{subtitle}</p>
+                <p className="mt-1 text-xs text-outline-variant">עודכן לאחרונה: {DATA_UPDATED}</p>
+              </motion.header>
 
-          {sub !== 'methodology' && <PageKpis group={group} />}
+              {sub !== 'methodology' && (
+                <motion.div variants={pageItemVariants}>
+                  <PageKpis group={group} />
+                </motion.div>
+              )}
 
-          {group === 'analytics' && sub !== 'methodology' && (
-            <CategoryLegend className="mb-6" />
-          )}
+              {group === 'analytics' && sub !== 'methodology' && (
+                <motion.div variants={pageItemVariants}>
+                  <CategoryLegend className="mb-6" />
+                </motion.div>
+              )}
 
-          <div className="animate-fadeIn">
-            {group === 'analytics' && sub === 'methodology' ? (
-              <MethodologyView />
-            ) : group === 'analytics' ? (
-              <AnalyticsView page={sub} />
-            ) : (
-              <CoordinatorView page={sub} />
-            )}
-          </div>
+              <motion.div variants={pageItemVariants} className="min-h-[200px]">
+                {renderPageContent(group, sub)}
+              </motion.div>
+            </PageTransition>
+          </PageTransition>
 
           <ZenFooter />
-        </div>
+        </motion.div>
       </main>
-    </div>
+    </motion.div>
   );
 }

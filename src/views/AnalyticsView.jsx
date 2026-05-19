@@ -57,8 +57,8 @@ export default function AnalyticsView({ page = 'intensity' }) {
 
   return (
     <div className="space-y-8">
-{page === 'intensity' && (
-        <div className="space-y-8 animate-fadeIn">
+      {page === 'intensity' && (
+        <div className="space-y-8">
           
           <div className="bg-surface-container-lowest p-6 md:p-8 rounded-none shadow-xl border border-outline-variant/15 grid grid-cols-1 lg:grid-cols-3 gap-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/40 rounded-full -z-10 opacity-60"></div>
@@ -256,7 +256,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
 
       {/* ======================= TAB 1.5: SPREAD (Data Grid Table) ======================= */}
       {page === 'spread' && (
-        <div className="bg-surface-container-lowest rounded-none shadow-xl border border-outline-variant/15 p-6 md:p-8 animate-fadeIn overflow-hidden flex flex-col min-h-[600px]">
+        <div className="bg-surface-container-lowest rounded-none shadow-xl border border-outline-variant/15 p-6 md:p-8 overflow-hidden flex flex-col min-h-[600px]">
           <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -344,7 +344,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
 
       {/* ======================= TAB 2: MATRIX VIEW (2D / 3D) ======================= */}
       {(page === 'matrix-3d' || page === 'matrix-2d') && (
-        <div className="bg-surface-container-lowest p-6 md:p-8 rounded-none shadow-xl border border-outline-variant/15 mb-8 relative overflow-hidden animate-fadeIn">
+        <div className="bg-surface-container-lowest p-6 md:p-8 rounded-none shadow-xl border border-outline-variant/15 mb-8 relative overflow-hidden">
           {/* Background Decoration */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-surface-container-low rounded-bl-full -z-10 opacity-50"></div>
           
@@ -443,7 +443,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
 
       {/* ======================= TAB 3: CATEGORY OVERVIEW VIEW ======================= */}
       {page === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 animate-fadeIn">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           
           <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[400px]">
             <div className="mb-4">
@@ -595,7 +595,6 @@ export default function AnalyticsView({ page = 'intensity' }) {
         </div>
       )}
 
-      
     </div>
   );
 }

@@ -290,6 +290,21 @@ body {
   color: var(--color-on-primary-container);
 }
 
+.page-transition-root {
+  position: relative;
+  overflow: hidden;
+  perspective: 1200px;
+}
+
+.page-transition-glow {
+  z-index: 0;
+}
+
+.page-transition-root > div > * {
+  position: relative;
+  z-index: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .news-ticker-scroll {
     animation: none;
@@ -302,6 +317,10 @@ body {
   .growth-matrix-path {
     animation: none;
     stroke-dashoffset: 0;
+  }
+
+  .page-transition-glow {
+    display: none;
   }
 
   html {

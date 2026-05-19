@@ -6,6 +6,16 @@ import { LABELS } from './data.js';
 /** @type {NavGroup[]} */
 export const NAV_GROUPS = [
   {
+    id: 'coordinators',
+    label: 'מתכללים',
+    icon: 'groups',
+    items: [
+      { id: 'overview', label: 'תקציר ופעילות', icon: 'summarize' },
+      { id: 'heatmap', label: 'פיזור עומסים', icon: 'grid_on' },
+      { id: 'dna', label: 'DNA מתכללים', icon: 'hub' },
+    ],
+  },
+  {
     id: 'analytics',
     label: 'ניתוח מענים',
     icon: 'analytics',
@@ -16,16 +26,6 @@ export const NAV_GROUPS = [
       { id: 'matrix-3d', label: 'מטריצת החלטות — 3D', icon: 'view_in_ar' },
       { id: 'matrix-2d', label: 'מטריצת החלטות — 2D', icon: 'scatter_plot' },
       { id: 'overview', label: 'פילוח כללי', icon: 'pie_chart' },
-    ],
-  },
-  {
-    id: 'coordinators',
-    label: 'מתכללים',
-    icon: 'groups',
-    items: [
-      { id: 'overview', label: 'תקציר ופעילות', icon: 'summarize' },
-      { id: 'heatmap', label: 'פיזור עומסים', icon: 'grid_on' },
-      { id: 'dna', label: 'DNA מתכללים', icon: 'hub' },
     ],
   },
 ];
