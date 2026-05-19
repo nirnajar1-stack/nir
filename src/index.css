@@ -293,7 +293,6 @@ body {
 .page-transition-root {
   position: relative;
   overflow: hidden;
-  perspective: 1200px;
 }
 
 .page-transition-glow {

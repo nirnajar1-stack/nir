@@ -13,44 +13,38 @@ function getVariants(reduceMotion) {
   return {
     initial: {
       opacity: 0,
-      x: 32,
-      y: 10,
-      scale: 0.96,
-      rotateY: -6,
-      filter: 'blur(14px)',
+      y: 48,
+      scale: 0.985,
+      filter: 'blur(8px)',
     },
     animate: {
       opacity: 1,
-      x: 0,
       y: 0,
       scale: 1,
-      rotateY: 0,
       filter: 'blur(0px)',
       transition: {
-        duration: 0.55,
+        duration: 0.52,
         ease: EASE_OUT,
-        staggerChildren: 0.06,
-        delayChildren: 0.05,
+        staggerChildren: 0.055,
+        delayChildren: 0.04,
       },
     },
     exit: {
       opacity: 0,
-      x: -28,
-      y: -6,
-      scale: 0.97,
-      rotateY: 4,
-      filter: 'blur(10px)',
-      transition: { duration: 0.34, ease: [0.4, 0, 0.2, 1] },
+      y: -36,
+      scale: 0.99,
+      filter: 'blur(6px)',
+      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
     },
   };
 }
 
 export const pageItemVariants = {
-  initial: { opacity: 0, y: 14 },
+  initial: { opacity: 0, y: 22 },
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: EASE_OUT },
+    transition: { duration: 0.38, ease: EASE_OUT },
   },
 };
 
@@ -72,7 +66,7 @@ export default function PageTransition({ pageKey, children, className = '' }) {
         >
           {!reduceMotion && (
             <motion.div
-              className="page-transition-glow pointer-events-none absolute -top-4 right-0 h-24 w-48 bg-primary/10 blur-3xl"
+              className="page-transition-glow pointer-events-none absolute -bottom-2 right-1/2 h-20 w-64 -translate-x-1/2 bg-primary/10 blur-3xl"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
