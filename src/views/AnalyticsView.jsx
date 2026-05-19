@@ -1,0 +1,662 @@
+import React, { useState } from 'react';
+import {
+  BarChart, Bar, ScatterChart, Scatter, ReferenceLine, XAxis, YAxis, ZAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, Line, ComposedChart, Legend,
+} from 'recharts';
+import { mainCategoryData, subCategoryData, COLORS, LABELS } from '../data.js';
+import { getHeatmapBg } from '../utils.js';
+import { getIntensityClassification } from '../utils/intensity.js';
+import { CustomTooltipMain, CustomTooltipSub, CustomTooltipScatter } from '../components/Tooltips.jsx';
+import { CustomTooltipComposed } from '../components/CustomTooltipComposed.jsx';
+import { renderCustomBadgeLabel } from '../components/BadgeLabel.jsx';
+import Interactive3DChart from '../components/Interactive3DChart.jsx';
+
+
+function renderDualCell(fam, task) {
+  if (!fam && !task) return <span className="text-slate-300">-</span>;
+  return (
+    <div className="flex items-center justify-center gap-0.5 dir-ltr flex-row-reverse">
+      <div className="flex flex-col items-center bg-slate-50 border border-slate-200 rounded-l-md px-2 py-1 min-w-[36px]">
+        <span className="text-[9px] text-slate-400 font-bold mb-0.5">{LABELS.families}</span>
+        <span className="text-sm font-bold text-slate-700 leading-none">{fam || 0}</span>
+      </div>
+      <div className="flex flex-col items-center bg-indigo-50 border border-indigo-100 rounded-r-md px-2 py-1 min-w-[36px]">
+        <span className="text-[9px] text-indigo-400 font-bold mb-0.5">{LABELS.tasks}</span>
+        <span className="text-sm font-bold text-indigo-700 leading-none">{task || 0}</span>
+      </div>
+    </div>
+  );
+}
+
+export default function AnalyticsView() {
+  const [activeMainTab, setActiveMainTab] = useState('intensity');
+  const [activeTab, setActiveTab] = useState('3d');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(subCategoryData[0]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState(LABELS.all);
+
+  const filteredSubCategoryData = subCategoryData.filter((item) => {
+    const matchesSearch = item.sub.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = categoryFilter === LABELS.all || item.main === categoryFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const trendChartData = selectedSubCategory
+    ? [
+        { month: LABELS.months[0], fam: selectedSubCategory.janF, tasks: selectedSubCategory.janT },
+        { month: LABELS.months[1], fam: selectedSubCategory.febF, tasks: selectedSubCategory.febT },
+        { month: LABELS.months[2], fam: selectedSubCategory.marF, tasks: selectedSubCategory.marT },
+        { month: LABELS.months[3], fam: selectedSubCategory.aprF, tasks: selectedSubCategory.aprT },
+      ]
+    : [];
+
+  const totalFamiliesSelected = trendChartData.reduce((acc, curr) => acc + curr.fam, 0);
+  const totalTasksSelected = trendChartData.reduce((acc, curr) => acc + curr.tasks, 0);
+  const intensityData = getIntensityClassification(totalFamiliesSelected, totalTasksSelected);
+
+  return (
+    <div className="space-y-8">
+{/* --- Main Navigation Tabs --- */}
+      <div className="flex justify-center mb-10">
+        <div className="bg-slate-200/60 p-1.5 rounded-2xl flex border border-slate-300/40 shadow-sm overflow-x-auto max-w-full">
+          <button 
+            onClick={() => setActiveMainTab('intensity')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'intensity' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            {LABELS.tabIntensity}
+          </button>
+          <button 
+            onClick={() => setActiveMainTab('spread')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'spread' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            {LABELS.tabSpread}
+          </button>
+          <button 
+            onClick={() => setActiveMainTab('matrix')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'matrix' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            {LABELS.tabMatrix}
+          </button>
+          <button 
+            onClick={() => setActiveMainTab('overview')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'overview' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            {LABELS.tabOverview}
+          </button>
+        </div>
+      </div>
+
+      {/* ======================= TAB 1: CONTINUITY VIEW (Charts) ======================= */}
+      {activeMainTab === 'intensity' && (
+        <div className="space-y-8 animate-fadeIn">
+          
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 grid grid-cols-1 lg:grid-cols-3 gap-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -z-10 opacity-60"></div>
+            <div className="lg:col-span-2 border-l border-slate-100 pl-4 flex flex-col justify-center">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">⚖️</span>
+                <h3 className="text-xl font-extrabold text-slate-800">החלטה מבוססת נרטיב: תפוצה מול עצימות</h3>
+              </div>
+              <div className="text-slate-600 text-sm leading-relaxed mb-4">
+                הוספת הניתוח המשלב בין "מספר משפחות" ל"מספר משימות" מאפשרת לזהות האם קפיצה בעומס נובעת מ<strong>בעיה רוחבית</strong> שפוגעת בהמון משפחות שונות, או מ<strong>בעיה נקודתית</strong> שבה מעט משפחות צורכות עשרות פעולות במקביל (לדוגמה: מוניות, סיוע משפטי).
+              </div>
+            </div>
+            
+            <div className="flex flex-col justify-center space-y-3 bg-slate-50/80 p-5 rounded-2xl border border-slate-200/50">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-rose-900 bg-rose-100 border border-rose-200/60 px-2.5 py-1 rounded-md">מורכבות קיצונית</span>
+                <span className="text-slate-500 font-bold">מעל 1.8 משימות למשפחה</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-amber-900 bg-amber-100 border border-amber-200/60 px-2.5 py-1 rounded-md">עומס ממוצע</span>
+                <span className="text-slate-500 font-bold">~ 1.5 משימות למשפחה</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-emerald-900 bg-emerald-100 border border-emerald-200/60 px-2.5 py-1 rounded-md">שירות חלק</span>
+                <span className="text-slate-500 font-bold">יחס 1:1 למשפחה</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            
+            <div className="lg:col-span-3 bg-white rounded-3xl shadow-lg border border-slate-100 p-6 overflow-hidden flex flex-col h-[700px]">
+              
+              <div className="mb-6 space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">מפת עומסים לפי משימות (Count)</h2>
+                  <p className="text-xs text-slate-500 mt-1">מפת החום משקפת את סך המשימות. לחץ על שורה לניתוח השוואתי מול המשפחות.</p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      placeholder={LABELS.searchPlaceholder}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-right"
+                    />
+                    <span className="absolute left-3 top-3 text-slate-400">🔍</span>
+                  </div>
+
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-right"
+                  >
+                    <option value={LABELS.all}>{LABELS.allCategories}</option>
+                    {Object.keys(COLORS).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                <table className="w-full text-right border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-400 text-xs font-bold sticky top-0 bg-white z-10 pb-2">
+                      <th className="pb-3 pr-2">תת-סיווג</th>
+                      <th className="pb-3 text-center">ינואר</th>
+                      <th className="pb-3 text-center">פברואר</th>
+                      <th className="pb-3 text-center">מרץ</th>
+                      <th className="pb-3 text-center">אפריל</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {filteredSubCategoryData.map((item) => {
+                      const isSelected = selectedSubCategory?.sub === item.sub;
+                      return (
+                        <tr 
+                          key={item.sub} 
+                          onClick={() => setSelectedSubCategory(item)}
+                          className={`hover:bg-indigo-50/20 cursor-pointer transition-all duration-150 rounded-lg ${isSelected ? 'bg-indigo-50/70 border-r-4 border-indigo-600 font-semibold' : ''}`}
+                        >
+                          <td className="py-3.5 pr-2">
+                            <div className="font-bold text-slate-800">{item.sub}</div>
+                            <div className="text-[10px] font-semibold" style={{ color: COLORS[item.main] }}>{item.main}</div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.janT, item.main) }}>
+                              {item.janT || '-'}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.febT, item.main) }}>
+                              {item.febT || '-'}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.marT, item.main) }}>
+                              {item.marT || '-'}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.aprT, item.main) }}>
+                              {item.aprT || '-'}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filteredSubCategoryData.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="py-12 text-center text-slate-400">
+                          {LABELS.noResults}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 space-y-6">
+              
+              <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 flex flex-col h-[400px]">
+                <div className="border-b border-slate-100 pb-4 mb-4">
+                  <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border" style={{ color: COLORS[selectedSubCategory?.main], borderColor: `${COLORS[selectedSubCategory?.main]}30`, backgroundColor: `${COLORS[selectedSubCategory?.main]}10` }}>
+                    {selectedSubCategory?.main}
+                  </span>
+                  <h3 className="text-2xl font-black text-slate-800 mt-2.5 truncate" title={selectedSubCategory?.sub}>{selectedSubCategory?.sub}</h3>
+                </div>
+
+                <div className="flex-grow flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={trendChartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<CustomTooltipComposed />} cursor={{fill: '#f8fafc'}} />
+                      <Legend verticalAlign="top" height={36} wrapperStyle={{fontSize: '12px', fontWeight: 'bold', color: '#475569'}} />
+                      
+                      <Bar 
+                        name="תפוצה: משפחות מעורבות" 
+                        dataKey="fam" 
+                        barSize={40} 
+                        fill="#cbd5e1" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                      
+                      <Line 
+                        name="עומס: סך משימות שנפתחו" 
+                        type="monotone" 
+                        dataKey="tasks" 
+                        stroke={COLORS[selectedSubCategory?.main]} 
+                        strokeWidth={4} 
+                        dot={{ r: 5, strokeWidth: 2, fill: '#fff' }}
+                        activeDot={{ r: 8 }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
+                <h4 className="font-extrabold text-slate-800 mb-2.5 flex items-center gap-2">
+                  <span>ℹ️</span> 
+                  אפיון עצימות: {intensityData.label}
+                </h4>
+                <div className="text-sm text-slate-500 leading-relaxed mb-4">
+                  {intensityData.desc}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-xs">
+                  <div className={`p-3.5 rounded-xl border ${intensityData.color}`}>
+                    <span className="block mb-1 font-semibold opacity-80">יחס משימות למשפחה</span>
+                    <span className="text-2xl font-black">
+                      {intensityData.ratio}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block mb-1 font-semibold">סך הכל (ינו'-אפר')</span>
+                    <div className="text-base font-bold text-slate-800">
+                      {totalTasksSelected} משימות<br/>
+                      <span className="text-slate-500 text-xs">{totalFamiliesSelected} משפחות</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB 1.5: SPREAD (Data Grid Table) ======================= */}
+      {activeMainTab === 'spread' && (
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 animate-fadeIn overflow-hidden flex flex-col min-h-[600px]">
+          <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-indigo-100 p-2.5 rounded-xl"><span className="text-indigo-600 text-2xl leading-none">🔎</span></div>
+                <h2 className="text-2xl font-extrabold text-slate-800">טבלת פיזור מורחבת</h2>
+              </div>
+              <p className="text-slate-600">
+                השוואה חודשית מפורטת: כמות המשפחות אל מול המשימות בכל תת-סיווג. היחס הכללי בעמודה השמאלית מתריע על "פינג-פונג" מול משפחות.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+               <div className="relative w-64">
+                  <input 
+                    type="text"
+                    placeholder={LABELS.searchPlaceholder}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-right"
+                  />
+                  <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+                </div>
+            </div>
+          </div>
+
+          <div className="flex-grow overflow-x-auto overflow-y-auto border border-slate-100 rounded-xl custom-scrollbar relative">
+            <table className="w-full text-right border-collapse min-w-[900px]">
+              <thead className="bg-slate-50 sticky top-0 z-20">
+                <tr className="border-b border-slate-200">
+                  <th className="py-4 px-4 text-slate-700 font-bold w-1/5 shadow-sm">קטגוריה ותת-סיווג</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">ינואר</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">פברואר</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">מרץ</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">אפריל</th>
+                  <th className="py-4 px-4 text-center text-slate-700 font-extrabold bg-slate-100 shadow-sm border-r border-slate-200">יחס עצימות כללי</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredSubCategoryData.map((item) => {
+                  const tFam = item.janF + item.febF + item.marF + item.aprF;
+                  const tTask = item.janT + item.febT + item.marT + item.aprT;
+                  const intensity = getIntensityClassification(tFam, tTask);
+
+                  return (
+                    <tr key={item.sub} className="hover:bg-indigo-50/30 transition-colors">
+                      <td className="py-4 px-4 bg-white sticky right-0 z-10 border-l border-slate-50">
+                        <div className="font-bold text-slate-800 text-sm">{item.sub}</div>
+                        <div className="text-[10px] font-semibold" style={{ color: COLORS[item.main] }}>{item.main}</div>
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.janF, item.janT)}
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.febF, item.febT)}
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.marF, item.marT)}
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.aprF, item.aprT)}
+                      </td>
+                      <td className="py-3 px-4 text-center bg-slate-50/50 border-r border-slate-100">
+                        <div className="flex flex-col items-center justify-center">
+                          <span className={`text-sm font-black px-3 py-1 rounded-full mb-1 ${intensity.color}`}>
+                            {intensity.ratio}
+                          </span>
+                          <span className="text-[9px] text-slate-500 font-semibold">{intensity.label}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredSubCategoryData.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="py-12 text-center text-slate-400">
+                      {LABELS.noDataSpread}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB 2: MATRIX VIEW (2D / 3D) ======================= */}
+      {activeMainTab === 'matrix' && (
+        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 mb-8 relative overflow-hidden animate-fadeIn">
+          {/* Background Decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-bl-full -z-10 opacity-50"></div>
+          
+          <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-indigo-100 p-2.5 rounded-xl"><span className="text-indigo-600 text-2xl leading-none">🧠</span></div>
+                <h2 className="text-2xl font-extrabold text-slate-800">מטריצת החלטות להעברת שרביט</h2>
+              </div>
+              <p className="text-slate-600">
+                זיהוי ויזואלי של תהליכים דורשי התערבות: <strong>משימות ברביע האדום</strong> מחייבות מינוי רפרנט מקצועי.
+              </p>
+            </div>
+
+            {/* Toggle Controls: 2D vs 3D and FULLSCREEN */}
+            <div className="flex flex-wrap items-center gap-2 self-end">
+              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 shadow-sm">
+                <button 
+                  onClick={() => setActiveTab('3d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '3d' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-800'}`}
+                >
+                  🚀 תלת-מימד אינטראקטיבי
+                </button>
+                <button 
+                  onClick={() => setActiveTab('2d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '2d' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-800'}`}
+                >
+                  📊 דו-מימד (2D)
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsFullscreen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-md transition-all flex items-center gap-1.5"
+              >
+                🖥️ מסך מלא
+              </button>
+            </div>
+          </div>
+
+          {/* Dynamic Matrix Frame (Normal View) */}
+          <div className="w-full h-[550px] transition-all duration-300">
+            {activeTab === '3d' ? (
+              <Interactive3DChart key="normal-3d" isFullscreen={false} />
+            ) : (
+              <div className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 20 }}>
+                    <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" opacity={0.6} />
+                    
+                    <XAxis 
+                      type="number" 
+                      dataKey="families" 
+                      name="משפחות ייחודיות" 
+                      label={{ value: 'תפוצה - כמות משפחות בטיפול', position: 'bottom', offset: 10, fill: '#64748b', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                      axisLine={{stroke: '#cbd5e1'}}
+                      tickLine={false}
+                    />
+                    
+                    <YAxis 
+                      type="number" 
+                      dataKey="sla" 
+                      name="ימי טיפול" 
+                      label={{ value: 'מאמץ תפעולי - ימי טיפול נדרשים', angle: -90, position: 'insideLeft', offset: -10, fill: '#64748b', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                      axisLine={{stroke: '#cbd5e1'}}
+                      tickLine={false}
+                      domain={[0, 40]}
+                    />
+                    
+                    <ZAxis 
+                      type="number" 
+                      dataKey="tasks" 
+                      range={[400, 3500]} 
+                      name="נפח משימות" 
+                    />
+                    
+                    <Tooltip content={<CustomTooltipScatter />} cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }} />
+                    
+                    <ReferenceLine x={32} stroke="#94a3b8" strokeDasharray="6 6" strokeWidth={2} opacity={0.5} />
+                    <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="6 6" strokeWidth={2} opacity={0.5} />
+
+                    <text x={75} y={38} fill="#ef4444" fontSize="18" fontWeight="900" opacity="0.08">רביע העברת שרביט</text>
+                    <text x={15} y={38} fill="#f59e0b" fontSize="18" fontWeight="900" opacity="0.08">רביע מומחיות נישה</text>
+                    <text x={75} y={8} fill="#10b981" fontSize="18" fontWeight="900" opacity="0.08">טיפול שוטף נרחב</text>
+                    <text x={15} y={8} fill="#3b82f6" fontSize="18" fontWeight="900" opacity="0.08">פעולות בזק</text>
+
+                    <Scatter 
+                      name="משימות" 
+                      data={subCategoryData} 
+                      label={renderCustomBadgeLabel}
+                    >
+                      {subCategoryData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[entry.main] || '#94a3b8'} 
+                          fillOpacity={0.8}
+                          stroke={COLORS[entry.main]}
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB 3: CATEGORY OVERVIEW VIEW ======================= */}
+      {activeMainTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 animate-fadeIn">
+          
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col h-[400px]">
+            <div className="mb-4">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="bg-blue-100 p-2 rounded-lg"><span className="text-blue-600 text-xl leading-none">📊</span></div>
+                <h2 className="text-xl font-bold text-slate-800">מבט על: עומס לפי סיווג ראשי</h2>
+              </div>
+            </div>
+            <div className="flex-grow w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mainCategoryData} margin={{ top: 30, right: 10, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="category" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} />
+                  <YAxis hide domain={[0, 'dataMax + 20']} />
+                  <Tooltip content={<CustomTooltipMain />} cursor={{ fill: '#f8fafc' }} />
+                  <Bar dataKey="families" radius={[6, 6, 0, 0]} barSize={45}>
+                    {mainCategoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[entry.category] || '#94a3b8'} />
+                    ))}
+                    <LabelList dataKey="avgSla" position="top" formatter={(value) => `${value} ימים`} fill="#334155" fontSize={12} fontWeight="bold" offset={10}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col h-[400px]">
+            <div className="mb-4">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="bg-emerald-100 p-2 rounded-lg"><span className="text-emerald-600 text-xl leading-none">📋</span></div>
+                <h2 className="text-xl font-bold text-slate-800">{LABELS.overviewSub}</h2>
+              </div>
+              <p className="text-sm text-slate-500">{LABELS.overviewSubDesc}</p>
+            </div>
+            <div className="flex-grow w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={subCategoryData.slice(0, 10)} layout="vertical" margin={{ top: 10, right: 30, left: 100, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                  <XAxis type="number" hide domain={[0, 'dataMax + 10']} />
+                  <YAxis type="category" dataKey="sub" tick={{ fill: '#475569', fontSize: 12, fontWeight: 500 }} width={140} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltipSub />} cursor={{ fill: '#f8fafc' }} />
+                  <Bar dataKey="families" radius={[4, 0, 0, 4]} barSize={16}>
+                    {subCategoryData.slice(0, 10).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[entry.main] || '#94a3b8'} />
+                    ))}
+                    <LabelList dataKey="sla" position="right" formatter={(value) => `${value} ${LABELS.dayShort}`} fill="#64748b" fontSize={11} fontWeight="bold" offset={8} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* --- Simulated Fullscreen Mode Overlay --- */}
+
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-md text-white p-6 md:p-8 flex flex-col h-screen overflow-hidden" dir="rtl">
+          
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🧠</span>
+              <div>
+                <h2 className="text-2xl font-black text-slate-100">מטריצת החלטות אסטרטגית - מסך מלא</h2>
+                <p className="text-sm text-slate-400">איפיון וסיווג משימות תחת מטה בקרה ארצי.</p>
+              </div>
+            </div>
+            
+            {/* Control buttons inside Fullscreen */}
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <div className="bg-slate-900 p-1 rounded-xl flex border border-slate-800 shadow-lg">
+                <button 
+                  onClick={() => setActiveTab('3d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '3d' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  🚀 תלת-מימד אינטראקטיבי
+                </button>
+                <button 
+                  onClick={() => setActiveTab('2d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '2d' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  📊 דו-מימד (2D)
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-5 py-3.5 rounded-xl shadow-lg transition-all flex items-center gap-2"
+              >
+                ❌ סגור מסך מלא
+              </button>
+            </div>
+          </div>
+
+          {/* Fullscreen Graph Body */}
+          <div className="flex-grow w-full relative bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden">
+            {activeTab === '3d' ? (
+              <Interactive3DChart key="fs-3d" isFullscreen={true} />
+            ) : (
+              <div className="w-full h-full p-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 30 }}>
+                    <CartesianGrid strokeDasharray="4 4" stroke="#334155" opacity={0.6} />
+                    
+                    <XAxis 
+                      type="number" 
+                      dataKey="families" 
+                      name="משפחות ייחודיות" 
+                      label={{ value: 'תפוצה - כמות משפחות בטיפול', position: 'bottom', offset: 15, fill: '#94a3b8', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 13 }}
+                      axisLine={{stroke: '#475569'}}
+                      tickLine={false}
+                    />
+                    
+                    <YAxis 
+                      type="number" 
+                      dataKey="sla" 
+                      name="ימי טיפול" 
+                      label={{ value: 'מאמץ תפעולי - ימי טיפול נדרשים', angle: -90, position: 'insideLeft', offset: -10, fill: '#94a3b8', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 13 }}
+                      axisLine={{stroke: '#475569'}}
+                      tickLine={false}
+                      domain={[0, 40]}
+                    />
+                    
+                    <ZAxis 
+                      type="number" 
+                      dataKey="tasks" 
+                      range={[500, 5000]} 
+                      name="נפח משימות" 
+                    />
+                    
+                    <Tooltip content={<CustomTooltipScatter />} cursor={{ strokeDasharray: '3 3', stroke: '#cbd5e1' }} />
+                    
+                    <ReferenceLine x={32} stroke="#475569" strokeDasharray="6 6" strokeWidth={2} opacity={0.6} />
+                    <ReferenceLine y={20} stroke="#475569" strokeDasharray="6 6" strokeWidth={2} opacity={0.6} />
+
+                    <text x={75} y={38} fill="#ef4444" fontSize="24" fontWeight="900" opacity="0.1">רביע העברת שרביט</text>
+                    <text x={15} y={38} fill="#f59e0b" fontSize="24" fontWeight="900" opacity="0.1">רביע מומחיות נישה</text>
+                    <text x={75} y={8} fill="#10b981" fontSize="24" fontWeight="900" opacity="0.1">טיפול שוטף נרחב</text>
+                    <text x={15} y={8} fill="#3b82f6" fontSize="24" fontWeight="900" opacity="0.1">פעולות בזק</text>
+
+                    <Scatter 
+                      name="משימות" 
+                      data={subCategoryData} 
+                      label={renderCustomBadgeLabel}
+                    >
+                      {subCategoryData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[entry.main] || '#94a3b8'} 
+                          fillOpacity={0.85}
+                          stroke={COLORS[entry.main]}
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      
+    </div>
+  );
+}

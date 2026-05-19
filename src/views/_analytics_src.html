@@ -1,0 +1,1087 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { BarChart, Bar, ScatterChart, Scatter, ReferenceLine, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, Line, ComposedChart, Legend } from 'recharts';
+
+// --- Global Data with Monthly Trends (Tasks vs Families) ---
+const mainCategoryData = [
+  { category: 'בירוקרטיה וזכויות', families: 189, avgSla: 25.1 },
+  { category: 'בריאות ורווחה', families: 123, avgSla: 22.3 },
+  { category: 'סיוע כלכלי ומגורים', families: 116, avgSla: 17.7 },
+  { category: 'לוגיסטיקה ודיגיטל', families: 102, avgSla: 9.9 },
+  { category: 'פנאי ושונות', families: 18, avgSla: 6.4 }
+];
+
+const subCategoryData = [
+  { main: 'בירוקרטיה וזכויות', sub: 'ייצוג מול רשויות', families: 74, sla: 25.5, janF: 28, janT: 41, febF: 37, febT: 55, marF: 32, marT: 43, aprF: 35, aprT: 51, tasks: 190 },
+  { main: 'סיוע כלכלי ומגורים', sub: 'סיוע כלכלי', families: 69, sla: 25.7, janF: 27, janT: 40, febF: 23, febT: 36, marF: 27, marT: 33, aprF: 27, aprT: 37, tasks: 146 },
+  { main: 'בירוקרטיה וזכויות', sub: 'מסמכים ותעודות', families: 63, sla: 19.9, janF: 16, janT: 25, febF: 28, febT: 43, marF: 22, marT: 28, aprF: 27, aprT: 36, tasks: 132 },
+  { main: 'בריאות ורווחה', sub: 'סיוע רפואי', families: 63, sla: 26.3, janF: 19, janT: 25, febF: 26, febT: 33, marF: 27, marT: 35, aprF: 19, aprT: 27, tasks: 120 },
+  { main: 'בריאות ורווחה', sub: 'חוסן ורווחה', families: 37, sla: 16.0, janF: 13, janT: 19, febF: 16, febT: 21, marF: 15, marT: 22, aprF: 12, aprT: 17, tasks: 79 },
+  { main: 'סיוע כלכלי ומגורים', sub: 'פתרונות דיור', families: 35, sla: 27.7, janF: 13, janT: 14, febF: 16, febT: 18, marF: 13, marT: 17, aprF: 10, aprT: 11, tasks: 60 },
+  { main: 'לוגיסטיקה ודיגיטל', sub: 'תמיכה דיגיטלית', families: 29, sla: 12.9, janF: 6, janT: 7, febF: 10, febT: 15, marF: 4, marT: 3, aprF: 12, aprT: 14, tasks: 39 },
+  { main: 'לוגיסטיקה ודיגיטל', sub: 'מוניות והסעות', families: 28, sla: 5.3, janF: 11, janT: 22, febF: 16, febT: 38, marF: 4, marT: 15, aprF: 5, aprT: 15, tasks: 90 },
+  { main: 'לוגיסטיקה ודיגיטל', sub: 'טיסות', families: 27, sla: 13.9, janF: 0, janT: 0, febF: 4, febT: 4, marF: 25, marT: 32, aprF: 3, aprT: 4, tasks: 40 },
+  { main: 'בירוקרטיה וזכויות', sub: 'סיוע משפטי', families: 26, sla: 34.7, janF: 8, janT: 10, febF: 8, febT: 8, marF: 9, marT: 11, aprF: 6, aprT: 6, tasks: 35 },
+  { main: 'בריאות ורווחה', sub: 'תורים רפואיים', families: 23, sla: 24.5, janF: 10, janT: 14, febF: 8, febT: 10, marF: 3, marT: 5, aprF: 7, aprT: 7, tasks: 36 },
+  { main: 'לוגיסטיקה ודיגיטל', sub: 'רב-קו', families: 18, sla: 7.7, janF: 11, janT: 12, febF: 6, febT: 8, marF: 0, marT: 0, aprF: 2, aprT: 2, tasks: 22 },
+  { main: 'בירוקרטיה וזכויות', sub: 'שיבוץ לצה"ל', families: 14, sla: 24.6, janF: 4, janT: 4, febF: 7, febT: 8, marF: 1, marT: 1, aprF: 4, aprT: 4, tasks: 17 },
+  { main: 'פנאי ושונות', sub: 'נופש ופנאי', families: 12, sla: 8.9, janF: 7, janT: 13, febF: 2, febT: 3, marF: 3, marT: 3, aprF: 2, aprT: 2, tasks: 21 },
+  { main: 'בירוקרטיה וזכויות', sub: 'הסדרת עובד זר', families: 8, sla: 26.7, janF: 1, janT: 1, febF: 2, febT: 2, marF: 3, marT: 5, aprF: 2, aprT: 2, tasks: 10 },
+  { main: 'סיוע כלכלי ומגורים', sub: 'הובלת תכולה', families: 6, sla: 11.6, janF: 2, janT: 2, febF: 2, febT: 2, marF: 1, marT: 1, aprF: 2, aprT: 2, tasks: 7 },
+  { main: 'סיוע כלכלי ומגורים', sub: 'חלוקת שי', families: 6, sla: 5.8, janF: 0, janT: 0, febF: 2, febT: 2, marF: 2, marT: 2, aprF: 2, aprT: 2, tasks: 6 },
+  { main: 'פנאי ושונות', sub: 'אחר', families: 6, sla: 3.9, janF: 3, janT: 3, febF: 2, febT: 2, marF: 2, marT: 2, aprF: 0, aprT: 0, tasks: 7 },
+  { main: 'בירוקרטיה וזכויות', sub: 'פגישות עם בכירים', families: 4, sla: 19.4, janF: 1, janT: 1, febF: 0, febT: 0, marF: 2, marT: 2, aprF: 2, aprT: 2, tasks: 5 }
+];
+
+// --- Styling & Colors ---
+const COLORS = {
+  'בירוקרטיה וזכויות': '#3B82F6', // Blue
+  'בריאות ורווחה': '#EF4444',     // Red
+  'לוגיסטיקה ודיגיטל': '#8B5CF6', // Purple
+  'סיוע כלכלי ומגורים': '#10B981',// Green
+  'פנאי ושונות': '#F59E0B'        // Yellow/Amber
+};
+
+const getHeatmapBg = (val, mainCat) => {
+  if (!val || val === 0) return 'rgba(241, 245, 249, 0.4)'; 
+  const baseColor = COLORS[mainCat] || '#94a3b8';
+  const opacity = Math.min(0.08 + (val / 55) * 0.75, 0.85);
+  return `rgba(${hexToRgb(baseColor)}, ${opacity})`;
+};
+
+const hexToRgb = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '148, 163, 184';
+};
+
+// --- Helpers ---
+const getIntensityClassification = (families, tasks) => {
+  if (families === 0 || tasks === 0) return { label: 'ללא פעילות', color: 'bg-slate-100 text-slate-500 border-slate-200' };
+  const ratio = tasks / families;
+  
+  if (ratio > 1.8) {
+    return { label: 'מורכבות קיצונית', ratio: ratio.toFixed(1), color: 'bg-rose-100 text-rose-800 border-rose-300', desc: 'מספר משימות גבוה למשפחה - מעיד על "פינג-פונג" או טיפול שאינו נסגר.' };
+  } else if (ratio > 1.3) {
+    return { label: 'עומס ממוצע', ratio: ratio.toFixed(1), color: 'bg-amber-100 text-amber-800 border-amber-300', desc: 'מעט מעגלים פתוחים במקביל למשפחה.' };
+  } else {
+    return { label: 'שירות חלק וישיר', ratio: ratio.toFixed(1), color: 'bg-emerald-100 text-emerald-800 border-emerald-300', desc: 'כמעט כל משימה מייצגת משפחה שונה (יחס 1:1).' };
+  }
+};
+
+const CustomTooltipComposed = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const families = payload.find(p => p.dataKey === 'fam')?.value || 0;
+    const tasks = payload.find(p => p.dataKey === 'tasks')?.value || 0;
+    return (
+      <div className="bg-white/95 backdrop-blur-md p-4 border border-slate-100 shadow-xl rounded-xl text-right min-w-[180px]" dir="rtl">
+        <div className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-2">{label}</div>
+        <div className="text-sm text-slate-600 mb-1 flex justify-between gap-4">
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-200"></div>תפוצה (משפחות):</div> 
+          <div className="font-bold text-slate-800">{families}</div>
+        </div>
+        <div className="text-sm text-slate-600 mb-2 flex justify-between gap-4">
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div>עומס (משימות):</div> 
+          <div className="font-bold text-slate-800">{tasks}</div>
+        </div>
+        <div className="bg-slate-50 p-2 rounded-lg mt-2 text-xs text-center font-semibold text-slate-600 border border-slate-100">
+          יחס עצימות: {families > 0 ? (tasks/families).toFixed(2) : 0} משימות למשפחה
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomTooltipMain = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white/95 backdrop-blur-md p-4 border border-slate-100 shadow-xl rounded-xl text-right min-w-[180px]" dir="rtl">
+        <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+          <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[data.category] }}></div>
+          <div className="font-bold text-slate-800">{data.category}</div>
+        </div>
+        <div className="text-sm text-slate-600 mb-1 flex justify-between gap-4"><span>משפחות מלוות:</span> <span className="font-bold text-slate-800">{data.families}</span></div>
+        <div className="text-sm text-slate-600 flex justify-between gap-4"><span>זמן טיפול ממוצע:</span> <span className="font-bold text-slate-800">{data.avgSla} ימ'</span></div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomTooltipScatter = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white/95 backdrop-blur-md p-4 border border-slate-100 shadow-xl rounded-xl text-right min-w-[200px]" dir="rtl">
+        <div className="font-bold text-slate-800 mb-1">{data.sub}</div>
+        <div className="text-xs text-slate-500 font-medium mb-3 border-b border-slate-100 pb-2 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[data.main] }}></span>
+          {data.main}
+        </div>
+        <div className="text-sm text-slate-600 mb-1 flex justify-between gap-4"><span>תפוצה:</span> <span className="font-bold text-slate-800">{data.families} משפחות</span></div>
+        <div className="text-sm text-slate-600 flex justify-between gap-4"><span>מאמץ (SLA):</span> <span className="font-bold text-slate-800">{data.sla} ימים</span></div>
+      </div>
+    );
+  }
+  return null;
+};
+
+// --- Beautiful Badge Label for Bubble Chart (2D) ---
+const renderCustomBadgeLabel = (props) => {
+  const { cx, cy, families, sla, sub } = props;
+  if (families > 30 && sla > 19) {
+    return (
+      <foreignObject x={cx - 75} y={cy - 22} width={150} height={44} className="overflow-visible pointer-events-none">
+        <div className="flex flex-col items-center justify-center w-full h-full drop-shadow-md">
+          <div className="bg-white/85 backdrop-blur-sm border border-white/50 px-3 py-0.5 rounded-t-lg shadow-sm w-max max-w-full">
+            <span className="text-slate-800 text-[11px] font-extrabold tracking-wide truncate block text-center">
+              {sub}
+            </span>
+          </div>
+          <div className="bg-slate-800/90 backdrop-blur-sm px-2 py-0.5 rounded-b-lg shadow-sm border-t border-slate-700 w-max">
+            <span className="text-white text-[10px] font-medium tracking-wide">
+              {sla} ימים | {families} משפ'
+            </span>
+          </div>
+        </div>
+      </foreignObject>
+    );
+  }
+  
+  if (families > 20 || sla > 20) {
+      return (
+          <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize="12" fontWeight="bold" opacity="0.9" style={{textShadow: '0px 1px 2px rgba(0,0,0,0.8)'}}>
+              {sub.split(' ')[0]}
+          </text>
+      )
+  }
+  return null;
+};
+
+// --- Interactive 3D Scatter Component (ThreeJS) ---
+const Interactive3DChart = ({ isFullscreen = false }) => {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [threeLoaded, setThreeLoaded] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [projectedLabels, setProjectedLabels] = useState([]);
+
+  useEffect(() => {
+    if (window.THREE) {
+      setThreeLoaded(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    script.async = true;
+    script.onload = () => setThreeLoaded(true);
+    document.body.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    if (!threeLoaded || !canvasRef.current || !containerRef.current) return;
+
+    const THREE = window.THREE;
+    const width = containerRef.current.clientWidth;
+    const height = containerRef.current.clientHeight || 550;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a);
+
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    let radius = isFullscreen ? 16 : 18;
+    let theta = 45;
+    let phi = 65;
+    
+    const updateCamera = () => {
+      const phiRad = (phi * Math.PI) / 180;
+      const thetaRad = (theta * Math.PI) / 180;
+      camera.position.x = radius * Math.sin(phiRad) * Math.sin(thetaRad);
+      camera.position.y = radius * Math.cos(phiRad);
+      camera.position.z = radius * Math.sin(phiRad) * Math.cos(thetaRad);
+      camera.lookAt(0, 0, 0);
+    };
+    updateCamera();
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight1.position.set(10, 20, 15);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+    dirLight2.position.set(-10, -20, -15);
+    scene.add(dirLight2);
+
+    const boxGeom = new THREE.BoxGeometry(10, 10, 10);
+    const edges = new THREE.EdgesGeometry(boxGeom);
+    const boxFrame = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x475569, linewidth: 2 }));
+    scene.add(boxFrame);
+
+    const gridHelper = new THREE.GridHelper(10, 10, 0x334155, 0x1e293b);
+    gridHelper.position.y = -5;
+    scene.add(gridHelper);
+
+    const mapX = (x) => (x / 80) * 10 - 5;
+    const mapY = (y) => (y / 40) * 10 - 5;
+    const mapZ = (z) => (z / 220) * 10 - 5;
+
+    const spheresGroup = new THREE.Group();
+    const sphereDataAssoc = [];
+
+    subCategoryData.forEach((item) => {
+      const size = 0.15 + (item.sla / 40) * 0.35;
+      const geom = new THREE.SphereGeometry(size, 32, 32);
+      
+      const mat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(COLORS[item.main]),
+        roughness: 0.1,
+        metalness: 0.15,
+        emissive: new THREE.Color(COLORS[item.main]),
+        emissiveIntensity: 0.15
+      });
+      
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.set(mapX(item.families), mapY(item.sla), mapZ(item.tasks));
+      
+      spheresGroup.add(mesh);
+      sphereDataAssoc.push({ mesh, data: item });
+    });
+    scene.add(spheresGroup);
+
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    const handleMouseDown = (e) => {
+      isDragging = true;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseMove = (e) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (isDragging) {
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+
+        theta -= deltaX * 0.45;
+        phi = Math.max(5, Math.min(175, phi + deltaY * 0.45));
+
+        updateCamera();
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      }
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      const intersects = raycaster.intersectObjects(spheresGroup.children);
+
+      if (intersects.length > 0) {
+        const collided = sphereDataAssoc.find(s => s.mesh === intersects[0].object);
+        if (collided) {
+          setHoveredPoint(collided.data);
+          document.body.style.cursor = 'pointer';
+        }
+      } else {
+        setHoveredPoint(null);
+        document.body.style.cursor = 'default';
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+    };
+
+    const handleWheel = (e) => {
+      e.preventDefault();
+      radius = Math.max(6, Math.min(30, radius + e.deltaY * 0.025));
+      updateCamera();
+    };
+
+    const canvasDom = canvasRef.current;
+    canvasDom.addEventListener('mousedown', handleMouseDown);
+    canvasDom.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    canvasDom.addEventListener('wheel', handleWheel, { passive: false });
+
+    let animationFrameId;
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+
+      const newLabels = sphereDataAssoc.map((s) => {
+        const vector = new THREE.Vector3();
+        s.mesh.getWorldPosition(vector);
+        vector.project(camera);
+
+        const isBehind = vector.z > 1;
+        const currWidth = containerRef.current ? containerRef.current.clientWidth : width;
+        const currHeight = containerRef.current ? containerRef.current.clientHeight : height;
+
+        const x2d = (vector.x * .5 + .5) * currWidth;
+        const y2d = (-(vector.y * .5) + .5) * currHeight;
+
+        return {
+          id: s.data.sub,
+          name: s.data.sub,
+          color: COLORS[s.data.main],
+          visible: !isBehind && s.data.families > 25 && s.data.sla > 15,
+          x: x2d,
+          y: y2d,
+          families: s.data.families,
+          sla: s.data.sla
+        };
+      });
+      setProjectedLabels(newLabels);
+    };
+    animate();
+
+    const handleResize = () => {
+      if (!containerRef.current) return;
+      const w = containerRef.current.clientWidth;
+      const h = containerRef.current.clientHeight || 550;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      canvasDom.removeEventListener('mousedown', handleMouseDown);
+      canvasDom.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      canvasDom.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [threeLoaded, isFullscreen]);
+
+  if (!threeLoaded) {
+    return (
+      <div className="h-full w-full bg-slate-900 rounded-2xl flex items-center justify-center text-white min-h-[500px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+          <p className="text-lg">טוען מרחב תלת-מימד...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative w-full h-full min-h-[450px] bg-slate-900 rounded-2xl overflow-hidden shadow-inner border border-slate-800">
+      <canvas ref={canvasRef} className="block w-full h-full cursor-grab active:cursor-grabbing" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {projectedLabels.map((lbl) => {
+          if (!lbl.visible) return null;
+          return (
+            <div 
+              key={lbl.id} 
+              className="absolute -translate-x-1/2 -translate-y-full flex flex-col items-center select-none"
+              style={{ left: `${lbl.x}px`, top: `${lbl.y - 12}px` }}
+            >
+              <div className="bg-white/95 border shadow-md px-2.5 py-1 rounded-t-md border-slate-200">
+                <span className="text-[10px] font-extrabold text-slate-800 whitespace-nowrap">{lbl.name}</span>
+              </div>
+              <div className="bg-slate-800 text-white text-[9px] px-2 py-1 rounded-b-md font-semibold border-t border-slate-700">
+                {lbl.sla} ימ' | {lbl.families} משפ'
+              </div>
+              <div className="w-1.5 h-1.5 rotate-45 border-r border-b border-slate-300 bg-slate-800 -mt-0.5"></div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="absolute bottom-4 right-4 bg-slate-950/80 backdrop-blur-md p-3 rounded-xl text-xs text-slate-300 space-y-1.5 border border-slate-800" dir="rtl">
+        <div className="font-bold text-slate-200 border-b border-slate-800 pb-1 mb-1">מקרא צירים:</div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-0.5 bg-red-500"></div>
+          <span>ציר X אופקי: תפוצה (משפחות)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-0.5 bg-green-500"></div>
+          <span>ציר Y אנכי: זמן טיפול (SLA)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-0.5 bg-blue-500"></div>
+          <span>ציר Z עומק: נפח משימות</span>
+        </div>
+        <div className="text-[10px] text-slate-400 border-t border-slate-800 pt-1 mt-1 font-medium">
+          * גרור עכבר לסיבוב | גלול לזום
+        </div>
+      </div>
+
+      {hoveredPoint && (
+        <div className="absolute top-4 left-4 bg-slate-950/90 backdrop-blur-md p-4 rounded-xl text-right min-w-[220px] border border-indigo-500/30 shadow-lg shadow-indigo-500/10 transition-all duration-150" dir="rtl">
+          <p className="font-extrabold text-slate-100 text-sm mb-1">{hoveredPoint.sub}</p>
+          <p className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color: COLORS[hoveredPoint.main] }}>
+            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: COLORS[hoveredPoint.main] }}></span>
+            {hoveredPoint.main}
+          </p>
+          <div className="space-y-1.5 border-t border-slate-800 pt-2 text-xs">
+            <div className="flex justify-between text-slate-400">
+              <span>תפוצה (X):</span>
+              <span className="font-bold text-slate-200">{hoveredPoint.families} משפחות</span>
+            </div>
+            <div className="flex justify-between text-slate-400">
+              <span>משך טיפול (Y):</span>
+              <span className="font-bold text-slate-200">{hoveredPoint.sla} ימים</span>
+            </div>
+            <div className="flex justify-between text-slate-400">
+              <span>סך משימות (Z):</span>
+              <span className="font-bold text-slate-200">{hoveredPoint.tasks} פניות</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function App() {
+  const [activeMainTab, setActiveMainTab] = useState('continuity'); 
+  const [activeTab, setActiveTab] = useState('3d'); 
+  const [isFullscreen, setIsFullscreen] = useState(false); 
+  const [selectedSubCategory, setSelectedSubCategory] = useState(subCategoryData[0]); 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('הכל');
+
+  const filteredSubCategoryData = subCategoryData.filter(item => {
+    const matchesSearch = item.sub.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = categoryFilter === 'הכל' || item.main === categoryFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const trendChartData = selectedSubCategory ? [
+    { month: 'ינואר', fam: selectedSubCategory.janF, tasks: selectedSubCategory.janT },
+    { month: 'פברואר', fam: selectedSubCategory.febF, tasks: selectedSubCategory.febT },
+    { month: 'מרץ', fam: selectedSubCategory.marF, tasks: selectedSubCategory.marT },
+    { month: 'אפריל', fam: selectedSubCategory.aprF, tasks: selectedSubCategory.aprT }
+  ] : [];
+
+  const totalFamiliesSelected = trendChartData.reduce((acc, curr) => acc + curr.fam, 0);
+  const totalTasksSelected = trendChartData.reduce((acc, curr) => acc + curr.tasks, 0);
+  const intensityData = getIntensityClassification(totalFamiliesSelected, totalTasksSelected);
+
+  // Helper renderer for Dual-Metric Table Cells
+  const renderDualCell = (fam, task) => {
+    if (!fam && !task) return <span className="text-slate-300">-</span>;
+    return (
+      <div className="flex items-center justify-center gap-0.5 dir-ltr flex-row-reverse">
+        <div className="flex flex-col items-center bg-slate-50 border border-slate-200 rounded-l-md px-2 py-1 min-w-[36px]">
+          <span className="text-[9px] text-slate-400 font-bold mb-0.5">משפחות</span>
+          <span className="text-sm font-bold text-slate-700 leading-none">{fam || 0}</span>
+        </div>
+        <div className="flex flex-col items-center bg-indigo-50 border border-indigo-100 rounded-r-md px-2 py-1 min-w-[36px]">
+          <span className="text-[9px] text-indigo-400 font-bold mb-0.5">משימות</span>
+          <span className="text-sm font-bold text-indigo-700 leading-none">{task || 0}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen font-sans selection:bg-indigo-200" dir="rtl">
+      
+      {/* Header */}
+      <div className="mb-8 text-center max-w-3xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+          לוח בקרה ניהולי: מעקב מענים ומשימות
+        </h1>
+        <p className="text-slate-600 text-base md:text-lg">
+          ניתוח קבוצות עבודה, עומסים רוחביים, זמני טיפול ומגמות רציפות לאורך השנה.
+        </p>
+      </div>
+
+      {/* --- Main Navigation Tabs --- */}
+      <div className="flex justify-center mb-10">
+        <div className="bg-slate-200/60 p-1.5 rounded-2xl flex border border-slate-300/40 shadow-sm overflow-x-auto max-w-full">
+          <button 
+            onClick={() => setActiveMainTab('continuity')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'continuity' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            📉 תפוצה לעומת עצימות
+          </button>
+          <button 
+            onClick={() => setActiveMainTab('spread')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'spread' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            🔎 טבלת פיזור מורחבת
+          </button>
+          <button 
+            onClick={() => setActiveMainTab('matrix')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'matrix' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            🧠 מטריצת החלטות (2D/3D)
+          </button>
+          <button 
+            onClick={() => setActiveMainTab('overview')}
+            className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'overview' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'}`}
+          >
+            📊 פילוח כללי
+          </button>
+        </div>
+      </div>
+
+      {/* ======================= TAB 1: CONTINUITY VIEW (Charts) ======================= */}
+      {activeMainTab === 'continuity' && (
+        <div className="space-y-8 animate-fadeIn">
+          
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 grid grid-cols-1 lg:grid-cols-3 gap-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -z-10 opacity-60"></div>
+            <div className="lg:col-span-2 border-l border-slate-100 pl-4 flex flex-col justify-center">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">⚖️</span>
+                <h3 className="text-xl font-extrabold text-slate-800">החלטה מבוססת נרטיב: תפוצה מול עצימות</h3>
+              </div>
+              <div className="text-slate-600 text-sm leading-relaxed mb-4">
+                הוספת הניתוח המשלב בין "מספר משפחות" ל"מספר משימות" מאפשרת לזהות האם קפיצה בעומס נובעת מ<strong>בעיה רוחבית</strong> שפוגעת בהמון משפחות שונות, או מ<strong>בעיה נקודתית</strong> שבה מעט משפחות צורכות עשרות פעולות במקביל (לדוגמה: מוניות, סיוע משפטי).
+              </div>
+            </div>
+            
+            <div className="flex flex-col justify-center space-y-3 bg-slate-50/80 p-5 rounded-2xl border border-slate-200/50">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-rose-900 bg-rose-100 border border-rose-200/60 px-2.5 py-1 rounded-md">מורכבות קיצונית</span>
+                <span className="text-slate-500 font-bold">מעל 1.8 משימות למשפחה</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-amber-900 bg-amber-100 border border-amber-200/60 px-2.5 py-1 rounded-md">עומס ממוצע</span>
+                <span className="text-slate-500 font-bold">~ 1.5 משימות למשפחה</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-emerald-900 bg-emerald-100 border border-emerald-200/60 px-2.5 py-1 rounded-md">שירות חלק</span>
+                <span className="text-slate-500 font-bold">יחס 1:1 למשפחה</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            
+            <div className="lg:col-span-3 bg-white rounded-3xl shadow-lg border border-slate-100 p-6 overflow-hidden flex flex-col h-[700px]">
+              
+              <div className="mb-6 space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">מפת עומסים לפי משימות (Count)</h2>
+                  <p className="text-xs text-slate-500 mt-1">מפת החום משקפת את סך המשימות. לחץ על שורה לניתוח השוואתי מול המשפחות.</p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      placeholder="חפש משימה..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-right"
+                    />
+                    <span className="absolute left-3 top-3 text-slate-400">🔍</span>
+                  </div>
+
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-right"
+                  >
+                    <option value="הכל">כל הקטגוריות</option>
+                    {Object.keys(COLORS).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                <table className="w-full text-right border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-400 text-xs font-bold sticky top-0 bg-white z-10 pb-2">
+                      <th className="pb-3 pr-2">תת-סיווג</th>
+                      <th className="pb-3 text-center">ינואר</th>
+                      <th className="pb-3 text-center">פברואר</th>
+                      <th className="pb-3 text-center">מרץ</th>
+                      <th className="pb-3 text-center">אפריל</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {filteredSubCategoryData.map((item) => {
+                      const isSelected = selectedSubCategory?.sub === item.sub;
+                      return (
+                        <tr 
+                          key={item.sub} 
+                          onClick={() => setSelectedSubCategory(item)}
+                          className={`hover:bg-indigo-50/20 cursor-pointer transition-all duration-150 rounded-lg ${isSelected ? 'bg-indigo-50/70 border-r-4 border-indigo-600 font-semibold' : ''}`}
+                        >
+                          <td className="py-3.5 pr-2">
+                            <div className="font-bold text-slate-800">{item.sub}</div>
+                            <div className="text-[10px] font-semibold" style={{ color: COLORS[item.main] }}>{item.main}</div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.janT, item.main) }}>
+                              {item.janT || '-'}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.febT, item.main) }}>
+                              {item.febT || '-'}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.marT, item.main) }}>
+                              {item.marT || '-'}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <div className="mx-auto rounded-md py-1.5 px-1 font-bold text-slate-700 text-xs w-8" style={{ backgroundColor: getHeatmapBg(item.aprT, item.main) }}>
+                              {item.aprT || '-'}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filteredSubCategoryData.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="py-12 text-center text-slate-400">
+                          לא נמצאו משימות.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 space-y-6">
+              
+              <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 flex flex-col h-[400px]">
+                <div className="border-b border-slate-100 pb-4 mb-4">
+                  <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border" style={{ color: COLORS[selectedSubCategory?.main], borderColor: `${COLORS[selectedSubCategory?.main]}30`, backgroundColor: `${COLORS[selectedSubCategory?.main]}10` }}>
+                    {selectedSubCategory?.main}
+                  </span>
+                  <h3 className="text-2xl font-black text-slate-800 mt-2.5 truncate" title={selectedSubCategory?.sub}>{selectedSubCategory?.sub}</h3>
+                </div>
+
+                <div className="flex-grow flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={trendChartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<CustomTooltipComposed />} cursor={{fill: '#f8fafc'}} />
+                      <Legend verticalAlign="top" height={36} wrapperStyle={{fontSize: '12px', fontWeight: 'bold', color: '#475569'}} />
+                      
+                      <Bar 
+                        name="תפוצה: משפחות מעורבות" 
+                        dataKey="fam" 
+                        barSize={40} 
+                        fill="#cbd5e1" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                      
+                      <Line 
+                        name="עומס: סך משימות שנפתחו" 
+                        type="monotone" 
+                        dataKey="tasks" 
+                        stroke={COLORS[selectedSubCategory?.main]} 
+                        strokeWidth={4} 
+                        dot={{ r: 5, strokeWidth: 2, fill: '#fff' }}
+                        activeDot={{ r: 8 }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
+                <h4 className="font-extrabold text-slate-800 mb-2.5 flex items-center gap-2">
+                  <span>ℹ️</span> 
+                  אפיון עצימות: {intensityData.label}
+                </h4>
+                <div className="text-sm text-slate-500 leading-relaxed mb-4">
+                  {intensityData.desc}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-xs">
+                  <div className={`p-3.5 rounded-xl border ${intensityData.color}`}>
+                    <span className="block mb-1 font-semibold opacity-80">יחס משימות למשפחה</span>
+                    <span className="text-2xl font-black">
+                      {intensityData.ratio}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block mb-1 font-semibold">סך הכל (ינו'-אפר')</span>
+                    <div className="text-base font-bold text-slate-800">
+                      {totalTasksSelected} משימות<br/>
+                      <span className="text-slate-500 text-xs">{totalFamiliesSelected} משפחות</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB 1.5: SPREAD (Data Grid Table) ======================= */}
+      {activeMainTab === 'spread' && (
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 animate-fadeIn overflow-hidden flex flex-col min-h-[600px]">
+          <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-indigo-100 p-2.5 rounded-xl"><span className="text-indigo-600 text-2xl leading-none">🔎</span></div>
+                <h2 className="text-2xl font-extrabold text-slate-800">טבלת פיזור מורחבת</h2>
+              </div>
+              <p className="text-slate-600">
+                השוואה חודשית מפורטת: כמות המשפחות אל מול המשימות בכל תת-סיווג. היחס הכללי בעמודה השמאלית מתריע על "פינג-פונג" מול משפחות.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+               <div className="relative w-64">
+                  <input 
+                    type="text"
+                    placeholder="חפש משימה..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-right"
+                  />
+                  <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+                </div>
+            </div>
+          </div>
+
+          <div className="flex-grow overflow-x-auto overflow-y-auto border border-slate-100 rounded-xl custom-scrollbar relative">
+            <table className="w-full text-right border-collapse min-w-[900px]">
+              <thead className="bg-slate-50 sticky top-0 z-20">
+                <tr className="border-b border-slate-200">
+                  <th className="py-4 px-4 text-slate-700 font-bold w-1/5 shadow-sm">קטגוריה ותת-סיווג</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">ינואר</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">פברואר</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">מרץ</th>
+                  <th className="py-4 px-2 text-center text-slate-700 font-bold shadow-sm">אפריל</th>
+                  <th className="py-4 px-4 text-center text-slate-700 font-extrabold bg-slate-100 shadow-sm border-r border-slate-200">יחס עצימות כללי</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredSubCategoryData.map((item) => {
+                  const tFam = item.janF + item.febF + item.marF + item.aprF;
+                  const tTask = item.janT + item.febT + item.marT + item.aprT;
+                  const intensity = getIntensityClassification(tFam, tTask);
+
+                  return (
+                    <tr key={item.sub} className="hover:bg-indigo-50/30 transition-colors">
+                      <td className="py-4 px-4 bg-white sticky right-0 z-10 border-l border-slate-50">
+                        <div className="font-bold text-slate-800 text-sm">{item.sub}</div>
+                        <div className="text-[10px] font-semibold" style={{ color: COLORS[item.main] }}>{item.main}</div>
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.janF, item.janT)}
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.febF, item.febT)}
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.marF, item.marT)}
+                      </td>
+                      <td className="py-3 px-2 align-middle">
+                        {renderDualCell(item.aprF, item.aprT)}
+                      </td>
+                      <td className="py-3 px-4 text-center bg-slate-50/50 border-r border-slate-100">
+                        <div className="flex flex-col items-center justify-center">
+                          <span className={`text-sm font-black px-3 py-1 rounded-full mb-1 ${intensity.color}`}>
+                            {intensity.ratio}
+                          </span>
+                          <span className="text-[9px] text-slate-500 font-semibold">{intensity.label}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredSubCategoryData.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="py-12 text-center text-slate-400">
+                      לא נמצאו נתונים תואמים.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB 2: MATRIX VIEW (2D / 3D) ======================= */}
+      {activeMainTab === 'matrix' && (
+        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 mb-8 relative overflow-hidden animate-fadeIn">
+          {/* Background Decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-bl-full -z-10 opacity-50"></div>
+          
+          <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-indigo-100 p-2.5 rounded-xl"><span className="text-indigo-600 text-2xl leading-none">🧠</span></div>
+                <h2 className="text-2xl font-extrabold text-slate-800">מטריצת החלטות להעברת שרביט</h2>
+              </div>
+              <p className="text-slate-600">
+                זיהוי ויזואלי של תהליכים דורשי התערבות: <strong>משימות ברביע האדום</strong> מחייבות מינוי רפרנט מקצועי.
+              </p>
+            </div>
+
+            {/* Toggle Controls: 2D vs 3D and FULLSCREEN */}
+            <div className="flex flex-wrap items-center gap-2 self-end">
+              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 shadow-sm">
+                <button 
+                  onClick={() => setActiveTab('3d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '3d' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-800'}`}
+                >
+                  🚀 תלת-מימד אינטראקטיבי
+                </button>
+                <button 
+                  onClick={() => setActiveTab('2d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '2d' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:text-slate-800'}`}
+                >
+                  📊 דו-מימד (2D)
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsFullscreen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-md transition-all flex items-center gap-1.5"
+              >
+                🖥️ מסך מלא
+              </button>
+            </div>
+          </div>
+
+          {/* Dynamic Matrix Frame (Normal View) */}
+          <div className="w-full h-[550px] transition-all duration-300">
+            {activeTab === '3d' ? (
+              <Interactive3DChart key="normal-3d" isFullscreen={false} />
+            ) : (
+              <div className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 20 }}>
+                    <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" opacity={0.6} />
+                    
+                    <XAxis 
+                      type="number" 
+                      dataKey="families" 
+                      name="משפחות ייחודיות" 
+                      label={{ value: 'תפוצה - כמות משפחות בטיפול', position: 'bottom', offset: 10, fill: '#64748b', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                      axisLine={{stroke: '#cbd5e1'}}
+                      tickLine={false}
+                    />
+                    
+                    <YAxis 
+                      type="number" 
+                      dataKey="sla" 
+                      name="ימי טיפול" 
+                      label={{ value: 'מאמץ תפעולי - ימי טיפול נדרשים', angle: -90, position: 'insideLeft', offset: -10, fill: '#64748b', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                      axisLine={{stroke: '#cbd5e1'}}
+                      tickLine={false}
+                      domain={[0, 40]}
+                    />
+                    
+                    <ZAxis 
+                      type="number" 
+                      dataKey="tasks" 
+                      range={[400, 3500]} 
+                      name="נפח משימות" 
+                    />
+                    
+                    <Tooltip content={<CustomTooltipScatter />} cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }} />
+                    
+                    <ReferenceLine x={32} stroke="#94a3b8" strokeDasharray="6 6" strokeWidth={2} opacity={0.5} />
+                    <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="6 6" strokeWidth={2} opacity={0.5} />
+
+                    <text x={75} y={38} fill="#ef4444" fontSize="18" fontWeight="900" opacity="0.08">רביע העברת שרביט</text>
+                    <text x={15} y={38} fill="#f59e0b" fontSize="18" fontWeight="900" opacity="0.08">רביע מומחיות נישה</text>
+                    <text x={75} y={8} fill="#10b981" fontSize="18" fontWeight="900" opacity="0.08">טיפול שוטף נרחב</text>
+                    <text x={15} y={8} fill="#3b82f6" fontSize="18" fontWeight="900" opacity="0.08">פעולות בזק</text>
+
+                    <Scatter 
+                      name="משימות" 
+                      data={subCategoryData} 
+                      label={renderCustomBadgeLabel}
+                    >
+                      {subCategoryData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[entry.main] || '#94a3b8'} 
+                          fillOpacity={0.8}
+                          stroke={COLORS[entry.main]}
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ======================= TAB 3: CATEGORY OVERVIEW VIEW ======================= */}
+      {activeMainTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 animate-fadeIn">
+          
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col h-[400px]">
+            <div className="mb-4">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="bg-blue-100 p-2 rounded-lg"><span className="text-blue-600 text-xl leading-none">📊</span></div>
+                <h2 className="text-xl font-bold text-slate-800">מבט על: עומס לפי סיווג ראשי</h2>
+              </div>
+            </div>
+            <div className="flex-grow w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mainCategoryData} margin={{ top: 30, right: 10, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="category" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} />
+                  <YAxis hide domain={[0, 'dataMax + 20']} />
+                  <Tooltip content={<CustomTooltipMain />} cursor={{ fill: '#f8fafc' }} />
+                  <Bar dataKey="families" radius={[6, 6, 0, 0]} barSize={45}>
+                    {mainCategoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[entry.category] || '#94a3b8'} />
+                    ))}
+                    <LabelList dataKey="avgSla" position="top" formatter={(value) => `${value} ימים`} fill="#334155" fontSize={12} fontWeight="bold" offset={10}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* --- Simulated Fullscreen Mode Overlay --- */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-md text-white p-6 md:p-8 flex flex-col h-screen overflow-hidden" dir="rtl">
+          
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🧠</span>
+              <div>
+                <h2 className="text-2xl font-black text-slate-100">מטריצת החלטות אסטרטגית - מסך מלא</h2>
+                <p className="text-sm text-slate-400">איפיון וסיווג משימות תחת מטה בקרה ארצי.</p>
+              </div>
+            </div>
+            
+            {/* Control buttons inside Fullscreen */}
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <div className="bg-slate-900 p-1 rounded-xl flex border border-slate-800 shadow-lg">
+                <button 
+                  onClick={() => setActiveTab('3d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '3d' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  🚀 תלת-מימד אינטראקטיבי
+                </button>
+                <button 
+                  onClick={() => setActiveTab('2d')}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${activeTab === '2d' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  📊 דו-מימד (2D)
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-5 py-3.5 rounded-xl shadow-lg transition-all flex items-center gap-2"
+              >
+                ❌ סגור מסך מלא
+              </button>
+            </div>
+          </div>
+
+          {/* Fullscreen Graph Body */}
+          <div className="flex-grow w-full relative bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden">
+            {activeTab === '3d' ? (
+              <Interactive3DChart key="fs-3d" isFullscreen={true} />
+            ) : (
+              <div className="w-full h-full p-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 30 }}>
+                    <CartesianGrid strokeDasharray="4 4" stroke="#334155" opacity={0.6} />
+                    
+                    <XAxis 
+                      type="number" 
+                      dataKey="families" 
+                      name="משפחות ייחודיות" 
+                      label={{ value: 'תפוצה - כמות משפחות בטיפול', position: 'bottom', offset: 15, fill: '#94a3b8', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 13 }}
+                      axisLine={{stroke: '#475569'}}
+                      tickLine={false}
+                    />
+                    
+                    <YAxis 
+                      type="number" 
+                      dataKey="sla" 
+                      name="ימי טיפול" 
+                      label={{ value: 'מאמץ תפעולי - ימי טיפול נדרשים', angle: -90, position: 'insideLeft', offset: -10, fill: '#94a3b8', fontWeight: 'bold' }} 
+                      tick={{ fill: '#94a3b8', fontSize: 13 }}
+                      axisLine={{stroke: '#475569'}}
+                      tickLine={false}
+                      domain={[0, 40]}
+                    />
+                    
+                    <ZAxis 
+                      type="number" 
+                      dataKey="tasks" 
+                      range={[500, 5000]} 
+                      name="נפח משימות" 
+                    />
+                    
+                    <Tooltip content={<CustomTooltipScatter />} cursor={{ strokeDasharray: '3 3', stroke: '#cbd5e1' }} />
+                    
+                    <ReferenceLine x={32} stroke="#475569" strokeDasharray="6 6" strokeWidth={2} opacity={0.6} />
+                    <ReferenceLine y={20} stroke="#475569" strokeDasharray="6 6" strokeWidth={2} opacity={0.6} />
+
+                    <text x={75} y={38} fill="#ef4444" fontSize="24" fontWeight="900" opacity="0.1">רביע העברת שרביט</text>
+                    <text x={15} y={38} fill="#f59e0b" fontSize="24" fontWeight="900" opacity="0.1">רביע מומחיות נישה</text>
+                    <text x={75} y={8} fill="#10b981" fontSize="24" fontWeight="900" opacity="0.1">טיפול שוטף נרחב</text>
+                    <text x={15} y={8} fill="#3b82f6" fontSize="24" fontWeight="900" opacity="0.1">פעולות בזק</text>
+
+                    <Scatter 
+                      name="משימות" 
+                      data={subCategoryData} 
+                      label={renderCustomBadgeLabel}
+                    >
+                      {subCategoryData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[entry.main] || '#94a3b8'} 
+                          fillOpacity={0.85}
+                          stroke={COLORS[entry.main]}
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modern Floating Legend */}
+      <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-100 flex flex-wrap gap-4 justify-center items-center max-w-4xl mx-auto">
+        <span className="text-slate-500 font-medium text-sm border-l border-slate-200 pl-4 ml-2">מקרא סיווגים:</span>
+        {Object.keys(COLORS).map((key) => (
+          <div key={key} className="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 rounded-lg transition-colors cursor-default">
+            <div className="w-3 h-3 rounded-full shadow-inner" style={{ backgroundColor: COLORS[key] }}></div>
+            <span className="text-sm text-slate-700 font-semibold">{key}</span>
+          </div>
+        ))}
+      </div>
+
+    </div>
+  );
+}
