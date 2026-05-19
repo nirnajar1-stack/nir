@@ -1,6 +1,6 @@
 export default function ZenHeader() {
   return (
-    <header className="fixed left-0 right-64 top-0 z-40 flex h-20 items-center justify-start bg-background/80 px-12 backdrop-blur-md">
+    <header className="fixed left-0 right-72 top-0 z-40 flex h-20 items-center justify-start bg-background/80 px-12 backdrop-blur-md">
       <div className="flex items-center gap-6">
         <button
           type="button"

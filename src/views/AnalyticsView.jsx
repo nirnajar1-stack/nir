@@ -28,9 +28,8 @@ function renderDualCell(fam, task) {
   );
 }
 
-export default function AnalyticsView() {
-  const [activeMainTab, setActiveMainTab] = useState('intensity');
-  const [activeTab, setActiveTab] = useState('3d');
+export default function AnalyticsView({ page = 'intensity' }) {
+  const matrixMode = page === 'matrix-2d' ? '2d' : '3d';
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState(subCategoryData[0]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,38 +56,7 @@ export default function AnalyticsView() {
 
   return (
     <div className="space-y-8">
-{/* --- Main Navigation Tabs --- */}
-      <div className="flex justify-center mb-10">
-        <div className="bg-surface-container p-1.5 rounded-none flex border border-outline-variant/25 shadow-sm overflow-x-auto max-w-full">
-          <button 
-            onClick={() => setActiveMainTab('intensity')}
-            className={`px-4 py-2.5 rounded-none font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'intensity' ? 'bg-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/50'}`}
-          >
-            {LABELS.tabIntensity}
-          </button>
-          <button 
-            onClick={() => setActiveMainTab('spread')}
-            className={`px-4 py-2.5 rounded-none font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'spread' ? 'bg-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/50'}`}
-          >
-            {LABELS.tabSpread}
-          </button>
-          <button 
-            onClick={() => setActiveMainTab('matrix')}
-            className={`px-4 py-2.5 rounded-none font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'matrix' ? 'bg-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/50'}`}
-          >
-            {LABELS.tabMatrix}
-          </button>
-          <button 
-            onClick={() => setActiveMainTab('overview')}
-            className={`px-4 py-2.5 rounded-none font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${activeMainTab === 'overview' ? 'bg-primary text-on-primary shadow-md' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/50'}`}
-          >
-            {LABELS.tabOverview}
-          </button>
-        </div>
-      </div>
-
-      {/* ======================= TAB 1: CONTINUITY VIEW (Charts) ======================= */}
-      {activeMainTab === 'intensity' && (
+{page === 'intensity' && (
         <div className="space-y-8 animate-fadeIn">
           
           <div className="bg-surface-container-lowest p-6 md:p-8 rounded-none shadow-xl border border-outline-variant/15 grid grid-cols-1 lg:grid-cols-3 gap-6 relative overflow-hidden">
@@ -286,7 +254,7 @@ export default function AnalyticsView() {
       )}
 
       {/* ======================= TAB 1.5: SPREAD (Data Grid Table) ======================= */}
-      {activeMainTab === 'spread' && (
+      {page === 'spread' && (
         <div className="bg-surface-container-lowest rounded-none shadow-xl border border-outline-variant/15 p-6 md:p-8 animate-fadeIn overflow-hidden flex flex-col min-h-[600px]">
           <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
@@ -374,7 +342,7 @@ export default function AnalyticsView() {
       )}
 
       {/* ======================= TAB 2: MATRIX VIEW (2D / 3D) ======================= */}
-      {activeMainTab === 'matrix' && (
+      {(page === 'matrix-3d' || page === 'matrix-2d') && (
         <div className="bg-surface-container-lowest p-6 md:p-8 rounded-none shadow-xl border border-outline-variant/15 mb-8 relative overflow-hidden animate-fadeIn">
           {/* Background Decoration */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-surface-container-low rounded-bl-full -z-10 opacity-50"></div>
@@ -392,21 +360,6 @@ export default function AnalyticsView() {
 
             {/* Toggle Controls: 2D vs 3D and FULLSCREEN */}
             <div className="flex flex-wrap items-center gap-2 self-end">
-              <div className="bg-surface-container-low p-1 rounded-none flex border border-outline-variant/20 shadow-sm">
-                <button 
-                  onClick={() => setActiveTab('3d')}
-                  className={`px-4 py-2 rounded-none font-bold text-xs transition-all ${activeTab === '3d' ? 'bg-inverse-surface text-on-primary shadow-md' : 'text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  🚀 תלת-מימד אינטראקטיבי
-                </button>
-                <button 
-                  onClick={() => setActiveTab('2d')}
-                  className={`px-4 py-2 rounded-none font-bold text-xs transition-all ${activeTab === '2d' ? 'bg-inverse-surface text-on-primary shadow-md' : 'text-on-surface-variant hover:text-on-surface'}`}
-                >
-                  📊 דו-מימד (2D)
-                </button>
-              </div>
-
               <button
                 onClick={() => setIsFullscreen(true)}
                 className="bg-primary hover:bg-primary-dim text-on-primary font-bold text-xs px-4 py-3 rounded-none shadow-md transition-all flex items-center gap-1.5"
@@ -418,7 +371,7 @@ export default function AnalyticsView() {
 
           {/* Dynamic Matrix Frame (Normal View) */}
           <div className="w-full h-[550px] transition-all duration-300">
-            {activeTab === '3d' ? (
+            {matrixMode === '3d' ? (
               <Interactive3DChart key="normal-3d" isFullscreen={false} />
             ) : (
               <div className="w-full h-full">
@@ -488,7 +441,7 @@ export default function AnalyticsView() {
       )}
 
       {/* ======================= TAB 3: CATEGORY OVERVIEW VIEW ======================= */}
-      {activeMainTab === 'overview' && (
+      {page === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 animate-fadeIn">
           
           <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[400px]">
@@ -561,21 +514,6 @@ export default function AnalyticsView() {
             
             {/* Control buttons inside Fullscreen */}
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              <div className="bg-inverse-surface p-1 rounded-none flex border border-outline-variant/30 shadow-lg">
-                <button 
-                  onClick={() => setActiveTab('3d')}
-                  className={`px-4 py-2 rounded-none font-bold text-xs transition-all ${activeTab === '3d' ? 'bg-primary text-on-primary shadow-md' : 'text-outline-variant hover:text-on-primary'}`}
-                >
-                  🚀 תלת-מימד אינטראקטיבי
-                </button>
-                <button 
-                  onClick={() => setActiveTab('2d')}
-                  className={`px-4 py-2 rounded-none font-bold text-xs transition-all ${activeTab === '2d' ? 'bg-primary text-on-primary shadow-md' : 'text-outline-variant hover:text-on-primary'}`}
-                >
-                  📊 דו-מימד (2D)
-                </button>
-              </div>
-
               <button
                 onClick={() => setIsFullscreen(false)}
                 className="bg-red-600 hover:bg-red-700 text-on-primary font-extrabold text-xs px-5 py-3.5 rounded-none shadow-lg transition-all flex items-center gap-2"
@@ -587,7 +525,7 @@ export default function AnalyticsView() {
 
           {/* Fullscreen Graph Body */}
           <div className="flex-grow w-full relative bg-inverse-surface/50 rounded-none border border-outline-variant/30 overflow-hidden">
-            {activeTab === '3d' ? (
+            {matrixMode === '3d' ? (
               <Interactive3DChart key="fs-3d" isFullscreen={true} />
             ) : (
               <div className="w-full h-full p-4">

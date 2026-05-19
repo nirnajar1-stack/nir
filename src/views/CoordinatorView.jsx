@@ -87,8 +87,7 @@ const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
   );
 };
 
-export default function CoordinatorView() {
-  const [activeTab, setActiveTab] = useState('overview');
+export default function CoordinatorView({ page = 'overview' }) {
   const [selectedCoordinator, setSelectedCoordinator] = useState(coordinators[0]);
 
   // --- עיבוד נתונים גלובלי ---
@@ -185,20 +184,7 @@ export default function CoordinatorView() {
     <>
       <style>{brandStyles}</style>
       <div className="font-assistant">
-      <nav className="flex flex-wrap gap-2 mb-6 justify-center">
-            <button onClick={() => setActiveTab('overview')} className={`px-4 py-2 rounded-none text-sm transition-all flex items-center gap-2 ${activeTab === 'overview' ? 'bg-primary text-on-primary font-bold shadow-md' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low border border-outline-variant/20 font-medium'}`}>
-              <span>📊</span> תקציר ופעילות
-            </button>
-            <button onClick={() => setActiveTab('heatmap')} className={`px-4 py-2 rounded-none text-sm transition-all flex items-center gap-2 ${activeTab === 'heatmap' ? 'bg-primary text-on-primary font-bold shadow-md' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low border border-outline-variant/20 font-medium'}`}>
-              <span>🔲</span> פיזור עומסים
-            </button>
-            <button onClick={() => setActiveTab('dna')} className={`px-4 py-2 rounded-none text-sm transition-all flex items-center gap-2 ${activeTab === 'dna' ? 'bg-primary text-on-primary font-bold shadow-md' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low border border-outline-variant/20 font-medium'}`}>
-              <span>🧬</span> DNA מתכללים
-            </button>
-          </nav>
-
-{/* --- טאב 1: מבט על (Overview) --- */}
-        {activeTab === 'overview' && (
+        {page === 'overview' && (
           <div className="space-y-4 animate-fade-in">
             <div className="mb-4 flex items-center gap-2">
                 <span className="text-xl">📈</span>
@@ -291,7 +277,7 @@ export default function CoordinatorView() {
         )}
 
         {/* --- טאב 2: מפת עומסים (Heatmap) --- */}
-        {activeTab === 'heatmap' && (
+        {page === 'heatmap' && (
           <div className="bg-surface-container-low rounded-none shadow-soft border border-outline-variant/30 p-5 overflow-hidden animate-fade-in">
             <div className="mb-4 flex items-center gap-2">
                 <span className="text-xl">🔲</span>
@@ -349,7 +335,7 @@ export default function CoordinatorView() {
         )}
 
         {/* --- טאב 3: פרופיל DNA מקצועי --- */}
-        {activeTab === 'dna' && (
+        {page === 'dna' && (
           <div className="space-y-4 animate-fade-in">
             <div className="mb-2 flex items-center gap-2">
                 <span className="text-xl">🧬</span>
