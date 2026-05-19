@@ -1,54 +1,68 @@
-import { useState } from 'react';
-import { COLORS, LABELS } from './data.js';
-import { DEFAULT_PAGE, getPageMeta } from './navigation.js';
+﻿import { useState } from 'react';
+import { getPageMeta } from './navigation.js';
+import { useHashPage } from './hooks/useHashPage.js';
 import AnalyticsView from './views/AnalyticsView.jsx';
 import CoordinatorView from './views/CoordinatorView.jsx';
+import MethodologyView from './views/MethodologyView.jsx';
 import NewsTicker from './components/layout/NewsTicker.jsx';
 import ZenSidebar from './components/layout/ZenSidebar.jsx';
 import ZenHeader from './components/layout/ZenHeader.jsx';
 import ZenFooter from './components/layout/ZenFooter.jsx';
+import Breadcrumbs from './components/layout/Breadcrumbs.jsx';
+import PageKpis from './components/layout/PageKpis.jsx';
+import CategoryLegend from './components/charts/CategoryLegend.jsx';
+
+const DATA_UPDATED = '19.05.2026';
 
 export default function App() {
-  const [activePage, setActivePage] = useState(DEFAULT_PAGE);
-  const { group, sub, groupLabel, pageLabel, subtitle } = getPageMeta(activePage);
+  const [activePage, setActivePage] = useHashPage();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { group, sub, pageLabel, subtitle } = getPageMeta(activePage);
 
   return (
     <div className="min-h-screen bg-background text-on-background font-body" dir="rtl">
-      <ZenSidebar activePage={activePage} onPageChange={setActivePage} />
-      <ZenHeader />
+      <a href="#main-content" className="zen-skip-link">
+        דלג לתוכן
+      </a>
 
-      <main className="mr-72 min-h-screen">
-        <div className="px-8 pb-12 pt-24 md:px-12">
+      <ZenSidebar
+        activePage={activePage}
+        onPageChange={setActivePage}
+        mobileOpen={mobileNavOpen}
+        onMobileClose={() => setMobileNavOpen(false)}
+      />
+
+      <ZenHeader onMenuOpen={() => setMobileNavOpen(true)} />
+
+      <main id="main-content" className="mr-0 min-h-screen lg:mr-72">
+        <div className="px-4 pb-12 pt-20 md:px-8 md:pt-24 lg:px-12">
           <NewsTicker />
 
-          <div className="mb-10">
-            <p className="zen-label mb-1">{groupLabel}</p>
-            <h2 className="text-[1.75rem] font-medium tracking-[0.02em] text-on-surface">{pageLabel}</h2>
-            <p className="mt-2 text-sm font-light tracking-wide text-on-surface-variant">{subtitle}</p>
-          </div>
+          <Breadcrumbs activePage={activePage} />
+
+          <header className="mb-6 max-w-3xl">
+            <h1 className="text-2xl font-medium tracking-tight text-on-surface md:text-[1.75rem]">{pageLabel}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">{subtitle}</p>
+            <p className="mt-1 text-xs text-outline-variant">
+              עודכן לאחרונה: {DATA_UPDATED}
+            </p>
+          </header>
+
+          {sub !== 'methodology' && <PageKpis group={group} />}
+
+          {group === 'analytics' && sub !== 'methodology' && (
+            <CategoryLegend className="mb-6" />
+          )}
 
           <div className="animate-fadeIn">
-            {group === 'analytics' ? (
+            {group === 'analytics' && sub === 'methodology' ? (
+              <MethodologyView />
+            ) : group === 'analytics' ? (
               <AnalyticsView page={sub} />
             ) : (
               <CoordinatorView page={sub} />
             )}
           </div>
-
-          {group === 'analytics' && (
-            <div className="zen-card mt-10 flex max-w-4xl flex-wrap items-center justify-center gap-4 border border-outline-variant/15">
-              <span className="zen-label border-l border-outline-variant/30 pl-4">{LABELS.legend}</span>
-              {Object.keys(COLORS).map((key) => (
-                <div
-                  key={key}
-                  className="flex cursor-default items-center gap-2 px-2 py-1 transition-colors hover:bg-surface-container-high"
-                >
-                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[key] }} />
-                  <span className="text-sm font-medium text-on-surface">{key}</span>
-                </div>
-              ))}
-            </div>
-          )}
 
           <ZenFooter />
         </div>

@@ -5,6 +5,7 @@ import {
   PolarAngleAxis, Treemap, PolarRadiusAxis,
 } from 'recharts';
 import { coordinators, categories, rawData, BRAND_CHART_COLORS } from '../data.js';
+import SectionIcon from '../components/ui/SectionIcon.jsx';
 
 const ZEN_TOOLTIP = {
   backgroundColor: '#f4f4ef',
@@ -15,7 +16,7 @@ const ZEN_TOOLTIP = {
 };
 
 const brandStyles = `
-  .font-assistant { font-family: 'Inter', system-ui, sans-serif; }
+  .font-assistant { font-family: 'Heebo', system-ui, sans-serif; }
   
   .bg-bg-main { background-color: #faf9f5; } 
   
@@ -187,7 +188,7 @@ export default function CoordinatorView({ page = 'overview' }) {
         {page === 'overview' && (
           <div className="space-y-4 animate-fade-in">
             <div className="mb-4 flex items-center gap-2">
-                <span className="text-xl">📈</span>
+                <SectionIcon name="insights" />
                 <div>
                     <h2 className="text-xl font-extrabold text-primary tracking-tight">תמונת מצב ארגונית</h2>
                     <p className="text-on-surface-variant text-[11px] font-medium">ריכוז המשימות לפי קטגוריות ראשיות ומשניות</p>
@@ -280,7 +281,7 @@ export default function CoordinatorView({ page = 'overview' }) {
         {page === 'heatmap' && (
           <div className="bg-surface-container-low rounded-none shadow-soft border border-outline-variant/30 p-5 overflow-hidden animate-fade-in">
             <div className="mb-4 flex items-center gap-2">
-                <span className="text-xl">🔲</span>
+                <SectionIcon name="grid_on" />
                 <div>
                     <h2 className="text-xl font-extrabold text-primary tracking-tight">מטריצת עומסים: מתכללים מול סוגי מענה</h2>
                     <p className="text-on-surface-variant text-[11px] font-medium">זיהוי עומסים ממוקדים או פיזור משימות (הנתונים מציגים כמות ואחוז מסך המענה הספציפי)</p>
@@ -338,7 +339,7 @@ export default function CoordinatorView({ page = 'overview' }) {
         {page === 'dna' && (
           <div className="space-y-4 animate-fade-in">
             <div className="mb-2 flex items-center gap-2">
-                <span className="text-xl">🧬</span>
+                <SectionIcon name="hub" />
                 <div>
                     <h2 className="text-xl font-extrabold text-primary tracking-tight">פרופיל DNA מקצועי למתכלל</h2>
                     <p className="text-on-surface-variant text-[11px] font-medium">ניתוח פעילות ממוקד, זיהוי חוזקות והזדמנויות לפיתוח מקצועי</p>
@@ -407,7 +408,7 @@ export default function CoordinatorView({ page = 'overview' }) {
                     ) : (
                       <div className="h-full flex items-center justify-center">
                         <div className="text-center text-outline-variant">
-                          <span>⚠️</span>
+                          <span className="material-symbols-outlined text-sm text-tertiary">warning</span>
                           <p className="font-bold text-sm">אין נתונים מספקים להצגה</p>
                         </div>
                       </div>
@@ -425,11 +426,11 @@ export default function CoordinatorView({ page = 'overview' }) {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                     <div className="bg-surface-container-low p-4 rounded border border-outline-variant/20 border-r-4 border-r-brand-blue">
-                      <p className="text-brand-blue font-bold text-[11px] uppercase mb-1 flex items-center gap-1"><span>⬆️</span> חוזקה ארגונית</p>
+                      <p className="text-primary font-bold text-[11px] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-sm">trending_up</span> חוזקה ארגונית</p>
                       <p className="text-sm font-medium leading-relaxed text-on-surface">נפח פעילות מרכזי ב<strong className="text-primary">{dynamicInsights.topCategory}</strong>. כדאי להיעזר במתכלל לשיתוף ידע מול העמיתים בנושאי {dynamicInsights.strength}.</p>
                     </div>
                     <div className="bg-surface-container-low p-4 rounded border border-outline-variant/20 border-r-4 border-r-outline-variant">
-                      <p className="text-on-surface-variant font-bold text-[11px] uppercase mb-1 flex items-center gap-1"><span>⬇️</span> אזור לחיזוק</p>
+                      <p className="text-on-surface-variant font-bold text-[11px] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-sm">trending_down</span> אזור לחיזוק</p>
                       <p className="text-sm font-medium leading-relaxed text-on-surface">נפח פעילות נמוך יחסית ב<strong className="text-primary">{dynamicInsights.growth.split(',')[0]}</strong>. מומלץ לתגבר היכרות עם נושאי {dynamicInsights.growth}.</p>
                     </div>
                   </div>

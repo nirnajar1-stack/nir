@@ -10,6 +10,7 @@ import { CustomTooltipMain, CustomTooltipSub, CustomTooltipScatter } from '../co
 import { CustomTooltipComposed } from '../components/CustomTooltipComposed.jsx';
 import { renderCustomBadgeLabel } from '../components/BadgeLabel.jsx';
 import Interactive3DChart from '../components/Interactive3DChart.jsx';
+import SectionIcon from '../components/ui/SectionIcon.jsx';
 
 
 function renderDualCell(fam, task) {
@@ -63,7 +64,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/40 rounded-full -z-10 opacity-60"></div>
             <div className="lg:col-span-2 border-l border-outline-variant/15 pl-4 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">⚖️</span>
+                <SectionIcon name="balance" />
                 <h3 className="text-xl font-extrabold text-on-surface">החלטה מבוססת נרטיב: תפוצה מול עצימות</h3>
               </div>
               <div className="text-on-surface-variant text-sm leading-relaxed mb-4">
@@ -224,7 +225,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
 
               <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15">
                 <h4 className="font-extrabold text-on-surface mb-2.5 flex items-center gap-2">
-                  <span>ℹ️</span> 
+                  <span className="material-symbols-outlined text-base">info</span>
                   אפיון עצימות: {intensityData.label}
                 </h4>
                 <div className="text-sm text-on-surface-variant leading-relaxed mb-4">
@@ -259,7 +260,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
           <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="bg-primary-container/50 p-2.5 rounded-none"><span className="text-primary text-2xl leading-none">🔎</span></div>
+                <SectionIcon name="table_chart" />
                 <h2 className="text-2xl font-extrabold text-on-surface">טבלת פיזור מורחבת</h2>
               </div>
               <p className="text-on-surface-variant">
@@ -350,7 +351,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
           <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-outline-variant/15 pb-6">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="bg-primary-container/50 p-2.5 rounded-none"><span className="text-primary text-2xl leading-none">🧠</span></div>
+                <SectionIcon name="psychology" />
                 <h2 className="text-2xl font-extrabold text-on-surface">מטריצת החלטות להעברת שרביט</h2>
               </div>
               <p className="text-on-surface-variant">
@@ -364,7 +365,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
                 onClick={() => setIsFullscreen(true)}
                 className="bg-primary hover:bg-primary-dim text-on-primary font-bold text-xs px-4 py-3 rounded-none shadow-md transition-all flex items-center gap-1.5"
               >
-                🖥️ מסך מלא
+                <span className="material-symbols-outlined text-sm">fullscreen</span> מסך מלא
               </button>
             </div>
           </div>
@@ -447,7 +448,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
           <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[400px]">
             <div className="mb-4">
               <div className="flex items-center gap-3 mb-1">
-                <div className="bg-blue-100 p-2 rounded-none"><span className="text-blue-600 text-xl leading-none">📊</span></div>
+                <SectionIcon name="bar_chart" />
                 <h2 className="text-xl font-bold text-on-surface">מבט על: עומס לפי סיווג ראשי</h2>
               </div>
             </div>
@@ -471,7 +472,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
           <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[400px]">
             <div className="mb-4">
               <div className="flex items-center gap-3 mb-1">
-                <div className="bg-emerald-100 p-2 rounded-none"><span className="text-emerald-600 text-xl leading-none">📋</span></div>
+                <SectionIcon name="summarize" />
                 <h2 className="text-xl font-bold text-on-surface">{LABELS.overviewSub}</h2>
               </div>
               <p className="text-sm text-on-surface-variant">{LABELS.overviewSubDesc}</p>
@@ -505,7 +506,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-outline-variant/30 pb-4 mb-4">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🧠</span>
+              <SectionIcon name="psychology" className="!h-12 !w-12" />
               <div>
                 <h2 className="text-2xl font-black text-on-primary">מטריצת החלטות אסטרטגית - מסך מלא</h2>
                 <p className="text-sm text-outline-variant">איפיון וסיווג משימות תחת מטה בקרה ארצי.</p>
@@ -518,7 +519,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
                 onClick={() => setIsFullscreen(false)}
                 className="bg-red-600 hover:bg-red-700 text-on-primary font-extrabold text-xs px-5 py-3.5 rounded-none shadow-lg transition-all flex items-center gap-2"
               >
-                ❌ סגור מסך מלא
+                <span className="material-symbols-outlined text-sm">close</span> סגור מסך מלא
               </button>
             </div>
           </div>

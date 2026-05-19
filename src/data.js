@@ -2,11 +2,11 @@ export { mainCategoryData, subCategoryData } from './data/analyticsData.js';
 export { coordinators, categories, rawData } from './data/coordinatorData.js';
 
 export const COLORS = {
-  'בירוקרטיה וזכויות': '#3B82F6',
-  'בריאות ורווחה': '#EF4444',
-  'לוגיסטיקה ודיגיטל': '#8B5CF6',
-  'סיוע כלכלי ומגורים': '#10B981',
-  'פנאי ושונות': '#F59E0B',
+  'בירוקרטיה וזכויות': '#4f5e7f',
+  'בריאות ורווחה': '#af3030',
+  'לוגיסטיקה ודיגיטל': '#596067',
+  'סיוע כלכלי ומגורים': '#445272',
+  'פנאי ושונות': '#9f403d',
 };
 
 export const BRAND_CHART_COLORS = ['#4f5e7f', '#af3030', '#445272', '#596067', '#9f403d', '#787c75'];

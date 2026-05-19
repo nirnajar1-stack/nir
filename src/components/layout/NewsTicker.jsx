@@ -11,7 +11,7 @@ export default function NewsTicker() {
     TICKER_ITEMS.map((item, i) => (
       <span
         key={i}
-        className={`flex items-center gap-2 font-medium tracking-widest uppercase text-[10px] shrink-0 ${
+        className={`flex items-center gap-2 text-[10px] font-medium shrink-0 ${
           item.highlight ? 'text-primary' : 'text-on-surface-variant'
         }`}
       >
@@ -21,7 +21,7 @@ export default function NewsTicker() {
     ));
 
   return (
-    <div className="mb-12 relative overflow-hidden border-b border-outline-variant/15 pb-2">
+    <div className="news-ticker mb-8 relative overflow-hidden border-b border-outline-variant/15 pb-2 md:mb-12">
       <div className="news-ticker-scroll">
         <div className="flex gap-16 items-center pl-16">{renderItems()}</div>
         <div className="flex gap-16 items-center pl-16">{renderItems()}</div>

@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-headline: 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-label: 'Inter', system-ui, sans-serif;
+  --font-headline: 'Heebo', system-ui, sans-serif;
+  --font-body: 'Heebo', system-ui, sans-serif;
+  --font-label: 'Heebo', system-ui, sans-serif;
 
   --radius-sm: 0px;
   --radius-md: 0px;
@@ -151,9 +151,31 @@ body {
 .zen-label {
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--color-on-surface-variant);
+}
+
+.zen-kpi-card {
+  background-color: var(--color-surface-container);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent);
+  padding: 1rem 1.25rem;
+}
+
+.zen-skip-link {
+  position: absolute;
+  right: 1rem;
+  top: -100px;
+  z-index: 100;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: top 0.2s;
+}
+
+.zen-skip-link:focus {
+  top: 1rem;
+  outline: 2px solid var(--color-tertiary);
 }
 
 .zen-nav-item {
@@ -198,6 +220,7 @@ body {
   color: var(--color-primary);
   font-weight: 600;
   background-color: var(--color-primary-container);
+  border-right: 3px solid var(--color-primary);
   padding-right: 0.5rem;
   margin-right: -0.5rem;
 }
@@ -265,4 +288,23 @@ body {
 ::selection {
   background-color: var(--color-primary-container);
   color: var(--color-on-primary-container);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-ticker-scroll {
+    animation: none;
+    flex-wrap: wrap;
+    white-space: normal;
+    gap: 0.75rem;
+  }
+
+  .animate-fadeIn,
+  .growth-matrix-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
 }

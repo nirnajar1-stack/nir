@@ -10,6 +10,7 @@ export const NAV_GROUPS = [
     label: 'ניתוח מענים',
     icon: 'analytics',
     items: [
+      { id: 'methodology', label: 'מתודולוגיית ניתוח', icon: 'menu_book' },
       { id: 'intensity', label: 'תפוצה לעומת עצימות', icon: 'show_chart' },
       { id: 'spread', label: 'טבלת פיזור מורחבת', icon: 'table_chart' },
       { id: 'matrix-3d', label: 'מטריצת החלטות — 3D', icon: 'view_in_ar' },
@@ -29,7 +30,13 @@ export const NAV_GROUPS = [
   },
 ];
 
-export const DEFAULT_PAGE = 'analytics-intensity';
+export const DEFAULT_PAGE = 'analytics-methodology';
+
+const ALL_PAGE_IDS = NAV_GROUPS.flatMap((g) => g.items.map((i) => `${g.id}-${i.id}`));
+
+export function isValidPageId(pageId) {
+  return ALL_PAGE_IDS.includes(pageId);
+}
 
 /** @param {string} pageId e.g. "analytics-intensity" */
 export function parsePageId(pageId) {
@@ -53,8 +60,10 @@ export function getPageMeta(pageId) {
     groupLabel: navGroup?.label ?? group,
     pageLabel: item?.label ?? sub,
     subtitle:
-      group === 'analytics'
-        ? LABELS.appSubtitle.split('(')[0].trim()
-        : 'פילוח לפי מתכללים (ינואר)',
+      sub === 'methodology'
+        ? 'עקרונות הניתוח, הגדרות מדדים והסבר על מבנה הלוח'
+        : group === 'analytics'
+          ? LABELS.appSubtitle.split('(')[0].trim()
+          : 'פילוח לפי מתכללים (ינואר)',
   };
 }
