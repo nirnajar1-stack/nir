@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import {
-  BarChart, Bar, ScatterChart, Scatter, ReferenceLine, XAxis, YAxis, ZAxis,
+  BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, Line, ComposedChart, Legend,
 } from 'recharts';
 import { mainCategoryData, subCategoryData, COLORS, LABELS } from '../data.js';
 import { getHeatmapBg } from '../utils.js';
 import { getIntensityClassification } from '../utils/intensity.js';
-import { CustomTooltipMain, CustomTooltipSub, CustomTooltipScatter } from '../components/Tooltips.jsx';
+import { CustomTooltipMain, CustomTooltipSub } from '../components/Tooltips.jsx';
 import { CustomTooltipComposed } from '../components/CustomTooltipComposed.jsx';
-import { renderCustomBadgeLabel } from '../components/BadgeLabel.jsx';
 import Interactive3DChart from '../components/Interactive3DChart.jsx';
+import MatrixScatterChart from '../components/charts/MatrixScatterChart.jsx';
+import MatrixFullscreenOverlay from '../components/layout/MatrixFullscreenOverlay.jsx';
 import SectionIcon from '../components/ui/SectionIcon.jsx';
 
 
@@ -371,76 +372,19 @@ export default function AnalyticsView({ page = 'intensity' }) {
           </div>
 
           {/* Dynamic Matrix Frame (Normal View) */}
-          <div className="w-full h-[550px] transition-all duration-300">
+          <div className="h-[550px] w-full transition-all duration-300">
             {matrixMode === '3d' ? (
               <Interactive3DChart key="normal-3d" isFullscreen={false} />
             ) : (
-              <div className="w-full h-full">
+              <div className="h-full w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 20 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" opacity={0.6} />
-                    
-                    <XAxis 
-                      type="number" 
-                      dataKey="families" 
-                      name="משפחות ייחודיות" 
-                      label={{ value: 'תפוצה - כמות משפחות בטיפול', position: 'bottom', offset: 10, fill: '#64748b', fontWeight: 'bold' }} 
-                      tick={{ fill: '#94a3b8', fontSize: 12 }}
-                      axisLine={{stroke: '#cbd5e1'}}
-                      tickLine={false}
-                    />
-                    
-                    <YAxis 
-                      type="number" 
-                      dataKey="sla" 
-                      name="ימי טיפול" 
-                      label={{ value: 'מאמץ תפעולי - ימי טיפול נדרשים', angle: -90, position: 'insideLeft', offset: -10, fill: '#64748b', fontWeight: 'bold' }} 
-                      tick={{ fill: '#94a3b8', fontSize: 12 }}
-                      axisLine={{stroke: '#cbd5e1'}}
-                      tickLine={false}
-                      domain={[0, 40]}
-                    />
-                    
-                    <ZAxis 
-                      type="number" 
-                      dataKey="tasks" 
-                      range={[400, 3500]} 
-                      name="נפח משימות" 
-                    />
-                    
-                    <Tooltip content={<CustomTooltipScatter />} cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }} />
-                    
-                    <ReferenceLine x={32} stroke="#94a3b8" strokeDasharray="6 6" strokeWidth={2} opacity={0.5} />
-                    <ReferenceLine y={20} stroke="#94a3b8" strokeDasharray="6 6" strokeWidth={2} opacity={0.5} />
-
-                    <text x={75} y={38} fill="#ef4444" fontSize="18" fontWeight="900" opacity="0.08">רביע העברת שרביט</text>
-                    <text x={15} y={38} fill="#f59e0b" fontSize="18" fontWeight="900" opacity="0.08">רביע מומחיות נישה</text>
-                    <text x={75} y={8} fill="#10b981" fontSize="18" fontWeight="900" opacity="0.08">טיפול שוטף נרחב</text>
-                    <text x={15} y={8} fill="#3b82f6" fontSize="18" fontWeight="900" opacity="0.08">פעולות בזק</text>
-
-                    <Scatter 
-                      name="משימות" 
-                      data={subCategoryData} 
-                      label={renderCustomBadgeLabel}
-                    >
-                      {subCategoryData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={COLORS[entry.main] || '#94a3b8'} 
-                          fillOpacity={0.8}
-                          stroke={COLORS[entry.main]}
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
+                  <MatrixScatterChart variant="light" />
                 </ResponsiveContainer>
               </div>
             )}
           </div>
         </div>
       )}
-
       {/* ======================= TAB 3: CATEGORY OVERVIEW VIEW ======================= */}
       {page === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -498,102 +442,21 @@ export default function AnalyticsView({ page = 'intensity' }) {
         </div>
       )}
 
-      {/* --- Simulated Fullscreen Mode Overlay --- */}
-
-      {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-inverse-surface/98 backdrop-blur-md text-on-primary p-6 md:p-8 flex flex-col h-screen overflow-hidden" dir="rtl">
-          
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-outline-variant/30 pb-4 mb-4">
-            <div className="flex items-center gap-3">
-              <SectionIcon name="psychology" className="!h-12 !w-12" />
-              <div>
-                <h2 className="text-2xl font-black text-on-primary">מטריצת החלטות אסטרטגית - מסך מלא</h2>
-                <p className="text-sm text-outline-variant">איפיון וסיווג משימות תחת מטה בקרה ארצי.</p>
-              </div>
-            </div>
-            
-            {/* Control buttons inside Fullscreen */}
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              <button
-                onClick={() => setIsFullscreen(false)}
-                className="bg-red-600 hover:bg-red-700 text-on-primary font-extrabold text-xs px-5 py-3.5 rounded-none shadow-lg transition-all flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-sm">close</span> סגור מסך מלא
-              </button>
-            </div>
+      <MatrixFullscreenOverlay
+        open={isFullscreen}
+        onClose={() => setIsFullscreen(false)}
+        matrixMode={matrixMode}
+      >
+        {matrixMode === '3d' ? (
+          <Interactive3DChart key="fs-3d" isFullscreen />
+        ) : (
+          <div className="absolute inset-0 p-4 md:p-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <MatrixScatterChart variant="dark" />
+            </ResponsiveContainer>
           </div>
-
-          {/* Fullscreen Graph Body */}
-          <div className="flex-grow w-full relative bg-inverse-surface/50 rounded-none border border-outline-variant/30 overflow-hidden">
-            {matrixMode === '3d' ? (
-              <Interactive3DChart key="fs-3d" isFullscreen={true} />
-            ) : (
-              <div className="w-full h-full p-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 30 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#334155" opacity={0.6} />
-                    
-                    <XAxis 
-                      type="number" 
-                      dataKey="families" 
-                      name="משפחות ייחודיות" 
-                      label={{ value: 'תפוצה - כמות משפחות בטיפול', position: 'bottom', offset: 15, fill: '#94a3b8', fontWeight: 'bold' }} 
-                      tick={{ fill: '#94a3b8', fontSize: 13 }}
-                      axisLine={{stroke: '#475569'}}
-                      tickLine={false}
-                    />
-                    
-                    <YAxis 
-                      type="number" 
-                      dataKey="sla" 
-                      name="ימי טיפול" 
-                      label={{ value: 'מאמץ תפעולי - ימי טיפול נדרשים', angle: -90, position: 'insideLeft', offset: -10, fill: '#94a3b8', fontWeight: 'bold' }} 
-                      tick={{ fill: '#94a3b8', fontSize: 13 }}
-                      axisLine={{stroke: '#475569'}}
-                      tickLine={false}
-                      domain={[0, 40]}
-                    />
-                    
-                    <ZAxis 
-                      type="number" 
-                      dataKey="tasks" 
-                      range={[500, 5000]} 
-                      name="נפח משימות" 
-                    />
-                    
-                    <Tooltip content={<CustomTooltipScatter />} cursor={{ strokeDasharray: '3 3', stroke: '#cbd5e1' }} />
-                    
-                    <ReferenceLine x={32} stroke="#475569" strokeDasharray="6 6" strokeWidth={2} opacity={0.6} />
-                    <ReferenceLine y={20} stroke="#475569" strokeDasharray="6 6" strokeWidth={2} opacity={0.6} />
-
-                    <text x={75} y={38} fill="#ef4444" fontSize="24" fontWeight="900" opacity="0.1">רביע העברת שרביט</text>
-                    <text x={15} y={38} fill="#f59e0b" fontSize="24" fontWeight="900" opacity="0.1">רביע מומחיות נישה</text>
-                    <text x={75} y={8} fill="#10b981" fontSize="24" fontWeight="900" opacity="0.1">טיפול שוטף נרחב</text>
-                    <text x={15} y={8} fill="#3b82f6" fontSize="24" fontWeight="900" opacity="0.1">פעולות בזק</text>
-
-                    <Scatter 
-                      name="משימות" 
-                      data={subCategoryData} 
-                      label={renderCustomBadgeLabel}
-                    >
-                      {subCategoryData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={COLORS[entry.main] || '#94a3b8'} 
-                          fillOpacity={0.85}
-                          stroke={COLORS[entry.main]}
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </MatrixFullscreenOverlay>
 
     </div>
   );

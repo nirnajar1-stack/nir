@@ -3,6 +3,8 @@ import { DEFAULT_PAGE, isValidPageId } from '../navigation.js';
 
 function readPageFromHash() {
   const raw = window.location.hash.replace(/^#\/?/, '');
+  if (raw === 'analytics-methodology') return 'methodology-guide';
+  if (raw === 'services-hub') return 'services-cards';
   return isValidPageId(raw) ? raw : DEFAULT_PAGE;
 }
 
@@ -10,9 +12,12 @@ export function useHashPage() {
   const [activePage, setActivePageState] = useState(readPageFromHash);
 
   const setActivePage = useCallback((pageId) => {
-    if (!isValidPageId(pageId)) return;
-    window.location.hash = `/${pageId}`;
-    setActivePageState(pageId);
+    let resolved = pageId;
+    if (pageId === 'analytics-methodology') resolved = 'methodology-guide';
+    if (pageId === 'services-hub') resolved = 'services-cards';
+    if (!isValidPageId(resolved)) return;
+    window.location.hash = `/${resolved}`;
+    setActivePageState(resolved);
   }, []);
 
   useEffect(() => {

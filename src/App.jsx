@@ -5,6 +5,8 @@ import { useHashPage } from './hooks/useHashPage.js';
 import AnalyticsView from './views/AnalyticsView.jsx';
 import CoordinatorView from './views/CoordinatorView.jsx';
 import MethodologyView from './views/MethodologyView.jsx';
+import ServicesViewCards from './views/ServicesViewCards.jsx';
+import ServicesViewAtlas from './views/ServicesViewAtlas.jsx';
 import NewsTicker from './components/layout/NewsTicker.jsx';
 import ZenSidebar from './components/layout/ZenSidebar.jsx';
 import ZenHeader from './components/layout/ZenHeader.jsx';
@@ -17,10 +19,16 @@ import PageTransition, { pageItemVariants } from './components/layout/PageTransi
 const DATA_UPDATED = '19.05.2026';
 
 function renderPageContent(group, sub) {
-  if (group === 'analytics' && sub === 'methodology') return <MethodologyView />;
+  if (group === 'methodology') return <MethodologyView />;
+  if (group === 'services') {
+    return sub === 'atlas' ? <ServicesViewAtlas /> : <ServicesViewCards />;
+  }
   if (group === 'analytics') return <AnalyticsView page={sub} />;
   return <CoordinatorView page={sub} />;
 }
+
+const SHOW_KPIS = new Set(['analytics', 'coordinators']);
+const SHOW_LEGEND = (group, sub) => group === 'analytics';
 
 export default function App() {
   const [activePage, setActivePage] = useHashPage();
@@ -60,13 +68,13 @@ export default function App() {
                 <p className="mt-1 text-xs text-outline-variant">עודכן לאחרונה: {DATA_UPDATED}</p>
               </motion.header>
 
-              {sub !== 'methodology' && (
+              {SHOW_KPIS.has(group) && (
                 <motion.div variants={pageItemVariants}>
                   <PageKpis group={group} />
                 </motion.div>
               )}
 
-              {group === 'analytics' && sub !== 'methodology' && (
+              {SHOW_LEGEND(group, sub) && (
                 <motion.div variants={pageItemVariants}>
                   <CategoryLegend className="mb-6" />
                 </motion.div>

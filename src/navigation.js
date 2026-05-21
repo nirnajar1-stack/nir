@@ -6,6 +6,12 @@ import { LABELS } from './data.js';
 /** @type {NavGroup[]} */
 export const NAV_GROUPS = [
   {
+    id: 'methodology',
+    label: 'מתודולוגיית ניתוח',
+    icon: 'menu_book',
+    items: [{ id: 'guide', label: 'מתודולוגיית הניתוח', icon: 'menu_book' }],
+  },
+  {
     id: 'coordinators',
     label: 'מתכללים',
     icon: 'groups',
@@ -20,7 +26,6 @@ export const NAV_GROUPS = [
     label: 'ניתוח מענים',
     icon: 'analytics',
     items: [
-      { id: 'methodology', label: 'מתודולוגיית ניתוח', icon: 'menu_book' },
       { id: 'intensity', label: 'תפוצה לעומת עצימות', icon: 'show_chart' },
       { id: 'spread', label: 'טבלת פיזור מורחבת', icon: 'table_chart' },
       { id: 'matrix-3d', label: 'מטריצת החלטות — 3D', icon: 'view_in_ar' },
@@ -28,9 +33,18 @@ export const NAV_GROUPS = [
       { id: 'overview', label: 'פילוח כללי', icon: 'pie_chart' },
     ],
   },
+  {
+    id: 'services',
+    label: 'מענים',
+    icon: 'support_agent',
+    items: [
+      { id: 'cards', label: 'מרכז החלטות — כרטיסים', icon: 'grid_view' },
+      { id: 'atlas', label: 'מרכז החלטות — מפת זירות', icon: 'view_sidebar' },
+    ],
+  },
 ];
 
-export const DEFAULT_PAGE = 'analytics-methodology';
+export const DEFAULT_PAGE = 'methodology-guide';
 
 const ALL_PAGE_IDS = NAV_GROUPS.flatMap((g) => g.items.map((i) => `${g.id}-${i.id}`));
 
@@ -54,16 +68,23 @@ export function getPageMeta(pageId) {
   const { group, sub } = parsePageId(pageId);
   const navGroup = NAV_GROUPS.find((g) => g.id === group);
   const item = navGroup?.items.find((i) => i.id === sub);
+
+  let subtitle = '';
+  if (group === 'methodology') subtitle = 'עקרונות הניתוח, Taxonomy, הגדרות מדדים ומבנה הלוח';
+  else if (group === 'coordinators') subtitle = 'פילוח לפי מתכללים (ינואר)';
+  else if (group === 'analytics') subtitle = LABELS.appSubtitle.split('(')[0].trim();
+  else if (group === 'services') {
+    subtitle =
+      sub === 'atlas'
+        ? 'תצוגת מפת זירות — ניווט רציף בין כל הנהלים'
+        : 'תצוגת כרטיסים — זירות מענה והעתקת נהלים מוכנים';
+  }
+
   return {
     group,
     sub,
     groupLabel: navGroup?.label ?? group,
     pageLabel: item?.label ?? sub,
-    subtitle:
-      sub === 'methodology'
-        ? 'עקרונות הניתוח, הגדרות מדדים והסבר על מבנה הלוח'
-        : group === 'analytics'
-          ? LABELS.appSubtitle.split('(')[0].trim()
-          : 'פילוח לפי מתכללים (ינואר)',
+    subtitle,
   };
 }
