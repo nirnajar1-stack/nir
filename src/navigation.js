@@ -26,11 +26,10 @@ export const NAV_GROUPS = [
     label: 'ניתוח מענים',
     icon: 'analytics',
     items: [
-      { id: 'intensity', label: 'תפוצה לעומת עצימות', icon: 'show_chart' },
+      { id: 'intensity', label: 'פריסה, תפוצה ופילוח', icon: 'show_chart' },
       { id: 'spread', label: 'טבלת פיזור מורחבת', icon: 'table_chart' },
       { id: 'matrix-3d', label: 'מטריצת החלטות — 3D', icon: 'view_in_ar' },
       { id: 'matrix-2d', label: 'מטריצת החלטות — 2D', icon: 'scatter_plot' },
-      { id: 'overview', label: 'פילוח כללי', icon: 'pie_chart' },
     ],
   },
   {
@@ -41,6 +40,12 @@ export const NAV_GROUPS = [
       { id: 'cards', label: 'מרכז החלטות — כרטיסים', icon: 'grid_view' },
       { id: 'atlas', label: 'מרכז החלטות — מפת זירות', icon: 'view_sidebar' },
     ],
+  },
+  {
+    id: 'development',
+    label: 'פיתוח מענים',
+    icon: 'auto_awesome',
+    items: [{ id: 'hub', label: 'פיתוח ומיצוי מענים', icon: 'donut_large' }],
   },
 ];
 
@@ -78,6 +83,9 @@ export function getPageMeta(pageId) {
       sub === 'atlas'
         ? 'תצוגת מפת זירות — ניווט רציף בין כל הנהלים'
         : 'תצוגת כרטיסים — זירות מענה והעתקת נהלים מוכנים';
+  } else if (group === 'development') {
+    subtitle =
+      'מעטפת אזרחית סביב המשפחה — פיתוח דינמי של מענים ומיצוי אקטיבי של זכויות';
   }
 
   return {

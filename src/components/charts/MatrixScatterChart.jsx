@@ -1,9 +1,43 @@
 import {
-  ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ReferenceLine, Cell,
+  ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ReferenceLine, Cell, Customized,
 } from 'recharts';
 import { subCategoryData, COLORS } from '../../data.js';
 import { CustomTooltipScatter } from '../Tooltips.jsx';
 import { renderCustomBadgeLabel } from '../BadgeLabel.jsx';
+
+const QUADRANT_LABELS = [
+  { key: 'handoff', text: 'רביע העברת שרביט', fill: '#eab308', x: 0.76, y: 0.2 },
+  { key: 'niche', text: 'רביע מומחיות נישה', fill: '#f59e0b', x: 0.24, y: 0.2 },
+  { key: 'broad', text: 'טיפול שוטף נרחב', fill: '#10b981', x: 0.76, y: 0.1 },
+  { key: 'quick', text: 'פעולות בזק', fill: '#3b82f6', x: 0.24, y: 0.1 },
+];
+
+function MatrixQuadrantLabels({ width, height, fontSize, opacity }) {
+  if (!width || !height) return null;
+  const innerW = width - 50;
+  const innerH = height - 60;
+  const offsetX = 40;
+  const offsetY = 28;
+
+  return (
+    <g className="matrix-quadrant-labels" pointerEvents="none" aria-hidden>
+      {QUADRANT_LABELS.map((q) => (
+        <text
+          key={q.key}
+          x={offsetX + innerW * q.x}
+          y={offsetY + innerH * q.y}
+          fill={q.fill}
+          fontSize={fontSize}
+          fontWeight="900"
+          opacity={opacity}
+          textAnchor="middle"
+        >
+          {q.text}
+        </text>
+      ))}
+    </g>
+  );
+}
 
 /** @param {{ variant?: 'light' | 'dark' }} props */
 export default function MatrixScatterChart({ variant = 'light' }) {
@@ -16,20 +50,20 @@ export default function MatrixScatterChart({ variant = 'light' }) {
   const refStroke = dark ? '#475569' : '#94a3b8';
   const cursorStroke = dark ? '#cbd5e1' : '#94a3b8';
   const quadrantOpacity = dark ? 0.1 : 0.08;
-  const quadrantSize = dark ? 24 : 18;
+  const quadrantSize = dark ? 22 : 16;
 
   return (
-    <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 20 }}>
+    <ScatterChart margin={{ top: 36, right: 28, bottom: 44, left: 16 }}>
       <CartesianGrid strokeDasharray="4 4" stroke={gridStroke} opacity={0.6} />
 
       <XAxis
         type="number"
         dataKey="families"
-        name="משפחות ייחודיות"
+        name="משפחות בטיפול"
         label={{
-          value: 'תפוצה - כמות משפחות בטיפול',
+          value: 'תפוצה — משפחות בטיפול',
           position: 'bottom',
-          offset: 10,
+          offset: 12,
           fill: labelFill,
           fontWeight: 'bold',
         }}
@@ -46,7 +80,7 @@ export default function MatrixScatterChart({ variant = 'light' }) {
           value: 'מאמץ תפעולי - ימי טיפול נדרשים',
           angle: -90,
           position: 'insideLeft',
-          offset: -10,
+          offset: 0,
           fill: labelFill,
           fontWeight: 'bold',
         }}
@@ -63,18 +97,16 @@ export default function MatrixScatterChart({ variant = 'light' }) {
       <ReferenceLine x={32} stroke={refStroke} strokeDasharray="6 6" strokeWidth={2} opacity={dark ? 0.6 : 0.5} />
       <ReferenceLine y={20} stroke={refStroke} strokeDasharray="6 6" strokeWidth={2} opacity={dark ? 0.6 : 0.5} />
 
-      <text x={75} y={38} fill="#ef4444" fontSize={quadrantSize} fontWeight="900" opacity={quadrantOpacity}>
-        רביע העברת שרביט
-      </text>
-      <text x={15} y={38} fill="#f59e0b" fontSize={quadrantSize} fontWeight="900" opacity={quadrantOpacity}>
-        רביע מומחיות נישה
-      </text>
-      <text x={75} y={8} fill="#10b981" fontSize={quadrantSize} fontWeight="900" opacity={quadrantOpacity}>
-        טיפול שוטף נרחב
-      </text>
-      <text x={15} y={8} fill="#3b82f6" fontSize={quadrantSize} fontWeight="900" opacity={quadrantOpacity}>
-        פעולות בזק
-      </text>
+      <Customized
+        component={(props) => (
+          <MatrixQuadrantLabels
+            width={props.width}
+            height={props.height}
+            fontSize={quadrantSize}
+            opacity={quadrantOpacity}
+          />
+        )}
+      />
 
       <Scatter name="משימות" data={subCategoryData} label={renderCustomBadgeLabel}>
         {subCategoryData.map((entry, index) => (

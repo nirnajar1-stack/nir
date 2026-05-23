@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { LABELS } from '../../data.js';
 import SectionIcon from '../ui/SectionIcon.jsx';
 
 /** @param {{ open: boolean; onClose: () => void; matrixMode: '2d' | '3d'; children: import('react').ReactNode }} props */
@@ -38,10 +39,10 @@ export default function MatrixFullscreenOverlay({ open, onClose, matrixMode, chi
             <SectionIcon name="psychology" className="!h-12 !w-12" />
             <div>
               <h2 className="text-xl font-black text-on-primary md:text-2xl">
-                מטריצת החלטות אסטרטגית — מסך מלא
+                {LABELS.fullscreenTitle}
               </h2>
               <p className="text-sm text-outline-variant">
-                {matrixMode === '3d' ? 'תצוגה תלת־ממדית' : 'תצוגה דו־ממדית'} · איפיון וסיווג משימות תחת מטה בקרה ארצי
+                {matrixMode === '3d' ? 'תצוגה תלת־ממדית' : 'תצוגה דו־ממדית'} · {LABELS.fullscreenDesc}
               </p>
             </div>
           </div>
@@ -49,7 +50,7 @@ export default function MatrixFullscreenOverlay({ open, onClose, matrixMode, chi
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center justify-center gap-2 self-end bg-red-600 px-5 py-3 text-xs font-extrabold text-on-primary shadow-lg transition-colors hover:bg-red-700"
+            className="flex items-center justify-center gap-2 self-end bg-yellow-600 px-5 py-3 text-xs font-extrabold text-on-primary shadow-lg transition-colors hover:bg-yellow-700"
           >
             <span className="material-symbols-outlined text-sm">close</span>
             סגור מסך מלא

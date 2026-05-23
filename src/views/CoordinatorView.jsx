@@ -1,10 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  Cell, PieChart, Pie, LabelList, Radar, RadarChart, PolarGrid,
-  PolarAngleAxis, Treemap, PolarRadiusAxis,
+  Cell, PieChart, Pie, Radar, RadarChart, PolarGrid,
+  PolarAngleAxis, PolarRadiusAxis,
 } from 'recharts';
 import { coordinators, categories, rawData, BRAND_CHART_COLORS } from '../data.js';
+import {
+  ACTIVE_COORDINATORS,
+  INACTIVE_COORDINATORS,
+  getCoordinatorCategoryProfile,
+  getCoordinatorServiceSpread,
+  getCategoryKnowledgeRoster,
+  getOrgKnowledgeHubList,
+} from '../utils/coordinatorStats.js';
 import SectionIcon from '../components/ui/SectionIcon.jsx';
 
 const ZEN_TOOLTIP = {
@@ -23,7 +31,7 @@ const brandStyles = `
   .text-brand-blue { color: #4f5e7f; }
   .text-brand-blue-dark { color: #445272; }
   .text-brand-blue-light { color: #d8e2ff; }
-  .text-brand-yellow { color: #af3030; }
+  .text-brand-yellow { color: #ca8a04; }
   .text-brand-yellow-dark { color: #9e2426; }
   
   .bg-brand-blue { background-color: #4f5e7f; }
@@ -48,48 +56,170 @@ const brandStyles = `
   .heat-4 { background-color: #303f5e; color: #fc6863; }
 `;
 
-const CustomTreemapContent = (props) => {
-  const { x, y, width, height, index, name } = props;
-  const safeName = typeof name === 'string' ? name : (name ? String(name) : '');
-  const isLightBg = (index % BRAND_CHART_COLORS.length === 1) || (index % BRAND_CHART_COLORS.length === 3);
-  const textColor = isLightBg ? '#445272' : '#f7f7ff';
+/** תווית מחוץ לפאי — גרסה מוגדלת ל-DNA */
+const renderDnaPieLabelOutside = ({
+  cx,
+  cy,
+  midAngle,
+  outerRadius,
+  percent,
+  name,
+  value,
+}) => {
+  if (!percent || percent < 0.025) return null;
+
+  const RADIAN = Math.PI / 180;
+  const angle = -midAngle * RADIAN;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  const labelR = outerRadius + 48;
+  const lx = cx + labelR * cos;
+  const ly = cy + labelR * sin;
+
+  const displayName = name?.length > 16 ? `${name.slice(0, 14)}…` : name;
+  const statLine = `${value} (${(percent * 100).toFixed(0)}%)`;
+
+  let anchor = 'middle';
+  if (cos > 0.25) anchor = 'start';
+  else if (cos < -0.25) anchor = 'end';
+
   return (
-    <g>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        style={{
-          fill: BRAND_CHART_COLORS[index % BRAND_CHART_COLORS.length],
-          stroke: '#f4f4ef',
-          strokeWidth: 2,
-          strokeOpacity: 1,
-        }}
-      />
-      {width > 60 && height > 30 && safeName ? (
-        <text x={x + width / 2} y={y + height / 2 + 5} textAnchor="middle" fill={textColor} fontSize={13} fontWeight="bold">
-          {safeName.length > 18 ? safeName.substring(0, 18) + '...' : safeName}
-        </text>
-      ) : null}
+    <g pointerEvents="none">
+      <text x={lx} y={ly - 8} textAnchor={anchor} dominantBaseline="middle" fill="#64748b" fontSize={11} fontWeight={600}>
+        {displayName}
+      </text>
+      <text x={lx} y={ly + 10} textAnchor={anchor} dominantBaseline="middle" fill="#334155" fontSize={12} fontWeight={800}>
+        {statLine}
+      </text>
     </g>
   );
 };
 
-const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
+/** תווית מחוץ לפאי — טקסט בלבד (ללא רקע) */
+const renderPieLabelOutside = ({
+  cx,
+  cy,
+  midAngle,
+  outerRadius,
+  percent,
+  name,
+  value,
+}) => {
+  if (!percent || percent < 0.03) return null;
+
   const RADIAN = Math.PI / 180;
-  const radius = outerRadius + 20;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const angle = -midAngle * RADIAN;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  const labelR = outerRadius + 36;
+  const lx = cx + labelR * cos;
+  const ly = cy + labelR * sin;
+
+  const displayName = name?.length > 14 ? `${name.slice(0, 12)}…` : name;
+  const statLine = `${value} (${(percent * 100).toFixed(0)}%)`;
+
+  let anchor = 'middle';
+  if (cos > 0.25) anchor = 'start';
+  else if (cos < -0.25) anchor = 'end';
+
   return (
-    <text x={x} y={y} fill="#002855" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontWeight="bold">
-      {`${name} (${(percent * 100).toFixed(0)}%)`}
-    </text>
+    <g pointerEvents="none">
+      <text x={lx} y={ly - 7} textAnchor={anchor} dominantBaseline="middle" fill="#64748b" fontSize={9} fontWeight={600}>
+        {displayName}
+      </text>
+      <text x={lx} y={ly + 8} textAnchor={anchor} dominantBaseline="middle" fill="#334155" fontSize={10} fontWeight={800}>
+        {statLine}
+      </text>
+    </g>
   );
 };
 
+/** בר אופקי עם תווית לבנה במרכז */
+const renderBarWithCenterLabel = (props) => {
+  const { x, y, width, height, payload } = props;
+  if (!payload?.sub) return null;
+  const entry = payload;
+
+  const barX = Number(x);
+  const barW = Number(width);
+  const barY = Number(y);
+  const barH = Number(height);
+  if (!barW || !barH) return null;
+
+  const fill = entry.main === 'בירוקרטיה וזכויות' ? '#4f5e7f' : '#445272';
+  const cx = barX + barW / 2;
+  const cy = barY + barH / 2;
+  const sub = entry.sub.length > 20 ? `${entry.sub.slice(0, 18)}…` : entry.sub;
+  const label = `${sub} · ${entry.count}`;
+
+  return (
+    <g>
+      <rect x={barX} y={barY} width={barW} height={barH} fill={fill} rx={4} ry={4} opacity={0.92} />
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="#ffffff"
+        fontSize={10}
+        fontWeight={800}
+        style={{ pointerEvents: 'none', textShadow: '0 1px 4px rgba(0,0,0,0.55)' }}
+      >
+        {label}
+      </text>
+    </g>
+  );
+};
+
+function PolarAngleTick({ payload, x, y, cx, cy, dataMap }) {
+  const entry = dataMap?.[payload.value];
+  const line1 = payload.value?.length > 13 ? `${payload.value.slice(0, 11)}…` : payload.value;
+  const line2 = entry ? `${entry.A} (${entry.pct}%)` : '0 (0%)';
+  const dx = x - cx;
+  const dy = y - cy;
+  const dist = Math.hypot(dx, dy) || 1;
+  const push = 32;
+  const nx = x + (dx / dist) * push;
+  const ny = y + (dy / dist) * push;
+  const anchor = nx > cx + 4 ? 'start' : nx < cx - 4 ? 'end' : 'middle';
+
+  return (
+    <g>
+      <text x={nx} y={ny - 5} textAnchor={anchor} fill="#64748b" fontSize={9} fontWeight={600}>
+        {line1}
+      </text>
+      <text x={nx} y={ny + 9} textAnchor={anchor} fill="#4f5e7f" fontSize={11} fontWeight={800}>
+        {line2}
+      </text>
+    </g>
+  );
+}
+
+function CoordinatorSelect({ value, onChange }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-lg border border-outline-variant/30 bg-surface-container py-1.5 px-2 text-base font-bold text-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+    >
+      <optgroup label={`פעילים (${ACTIVE_COORDINATORS.length})`}>
+        {ACTIVE_COORDINATORS.map((c) => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </optgroup>
+      <optgroup label={`לא פעילים (${INACTIVE_COORDINATORS.length})`}>
+        {INACTIVE_COORDINATORS.map((c) => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </optgroup>
+    </select>
+  );
+}
+
 export default function CoordinatorView({ page = 'overview' }) {
-  const [selectedCoordinator, setSelectedCoordinator] = useState(coordinators[0]);
+  const [selectedCoordinator, setSelectedCoordinator] = useState(ACTIVE_COORDINATORS[0]);
 
   // --- עיבוד נתונים גלובלי ---
   const sortedTasks = useMemo(() => {
@@ -120,66 +250,70 @@ export default function CoordinatorView({ page = 'overview' }) {
       .slice(0, 5);
   }, [sortedTasks]);
 
-  // --- חישובים לטאב DNA ---
-  const coordinatorDnaData = useMemo(() => {
-    const cIdx = coordinators.indexOf(selectedCoordinator);
-    return categories.map(cat => {
-      const value = sortedTasks
-        .filter(d => d.main === cat)
-        .reduce((sum, row) => sum + row.values[cIdx], 0);
-      return { subject: cat, A: value };
+  const coordinatorProfile = useMemo(
+    () => getCoordinatorCategoryProfile(selectedCoordinator, sortedTasks),
+    [selectedCoordinator, sortedTasks],
+  );
+
+  const radarDataMap = useMemo(() => {
+    const map = {};
+    coordinatorProfile.radarData.forEach((d) => {
+      map[d.subject] = d;
     });
-  }, [selectedCoordinator, sortedTasks]);
+    return map;
+  }, [coordinatorProfile]);
 
-  const dynamicInsights = useMemo(() => {
-    const sortedDna = [...coordinatorDnaData].sort((a, b) => b.A - a.A);
-    const top = sortedDna[0];
-    const bottom = sortedDna[sortedDna.length - 1];
+  const serviceSpreadPie = useMemo(
+    () => getCoordinatorServiceSpread(selectedCoordinator),
+    [selectedCoordinator],
+  );
 
-    if (top.A === 0) return { status: "חדש", topCategory: "אין נתונים", strength: "טרם נצברה פעילות", growth: "טרם נצברה פעילות" };
+  const orgKnowledgeList = useMemo(() => getOrgKnowledgeHubList(), []);
+  const categoryRosters = useMemo(() => getCategoryKnowledgeRoster(), []);
 
-    const categoryMap = {
-      "בירוקרטיה וזכויות": "מיצוי זכויות מול משרדי הממשלה",
-      "בריאות ורווחה": "מענה רפואי, חוסן נפשי ותמיכה",
-      "לוגיסטיקה ודיגיטל": "סיוע לוגיסטי, היסעים וכלים דיגיטליים",
-      "סיוע כלכלי ומגורים": "פתרונות דיור וליווי פיננסי",
-      "פנאי ושונות": "רווחה חברתית, הפוגה ונופש"
-    };
+  const isSelectedActive = ACTIVE_COORDINATORS.includes(selectedCoordinator);
 
-    return {
-      topCategory: top.subject,
-      strength: categoryMap[top.subject] || top.subject,
-      growth: categoryMap[bottom.subject] || bottom.subject,
-      status: top.A > 20 ? "Master" : top.A > 10 ? "Expert" : "Specialist"
-    };
-  }, [coordinatorDnaData]);
-
-  const treeData = useMemo(() => {
-    const cIdx = coordinators.indexOf(selectedCoordinator);
-    const children = categories.map((cat, i) => {
-      const subItems = sortedTasks
-        .filter(d => d.main === cat)
-        .map(sub => ({
-          name: sub.sub,
-          size: sub.values[cIdx]
-        }))
-        .filter(s => s.size > 0);
-      
-      return subItems.length > 0 ? { name: cat, children: subItems } : null;
-    }).filter(Boolean);
-
-    return children.length > 0 ? [{ name: 'Root', children }] : [];
-  }, [selectedCoordinator, sortedTasks]);
-
-  // --- כלים (Utils) ---
   const getHeatColorClass = (value, totalInColumn) => {
-    if (value === 0) return 'bg-[#e2e8f0] text-outline-variant'; // אפור-כחלחל עדין עבור תאים ריקים
+    if (value === 0) return 'bg-[#e2e8f0] text-outline-variant';
     const intensity = (value / totalInColumn) * 100;
-    if (intensity < 15) return 'heat-1 font-bold'; 
-    if (intensity < 40) return 'heat-2 font-bold'; 
-    if (intensity < 70) return 'heat-3 font-black'; 
-    return 'heat-4 font-black'; 
+    if (intensity < 15) return 'heat-1 font-bold';
+    if (intensity < 40) return 'heat-2 font-bold';
+    if (intensity < 70) return 'heat-3 font-black';
+    return 'heat-4 font-black';
   };
+
+  const renderHeatmapRows = (list, badgeLabel, badgeClass) =>
+    list.map((coordinator) => {
+      const cIdx = coordinators.indexOf(coordinator);
+      const coordinatorTotal = sortedTasks.reduce((sum, task) => sum + task.values[cIdx], 0);
+      return (
+        <tr key={coordinator} className="hover:bg-surface-container border-b border-outline-variant/20 transition-colors">
+          <td className="py-2.5 px-4 text-sm font-bold text-primary bg-surface-container-low sticky right-0 z-10 shadow-[2px_0_8px_-2px_rgba(0,71,149,0.08)] text-right border-l border-outline-variant/25">
+            <div className="flex items-center gap-2">
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${badgeClass}`}>{badgeLabel}</span>
+              <span className="text-[13px] leading-tight">{coordinator}</span>
+            </div>
+            <div className="text-[10px] text-on-surface-variant font-semibold mt-1">סה״כ {coordinatorTotal} · {((coordinatorTotal / totalTasks) * 100).toFixed(1)}% מכלל</div>
+          </td>
+          {sortedTasks.map((task, tIdx) => {
+            const val = task.values[cIdx];
+            const taskTotal = task.values.reduce((a, b) => a + b, 0);
+            return (
+              <td key={tIdx} className={`py-1 px-2 border-l border-outline-variant/30 text-center transition-all ${getHeatColorClass(val, taskTotal)}`}>
+                {val > 0 ? (
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="text-[15px] leading-none">{val}</span>
+                    <span className="text-[10px] opacity-80 mt-0.5">{((val / taskTotal) * 100).toFixed(0)}%</span>
+                  </div>
+                ) : (
+                  <span className="font-bold">-</span>
+                )}
+              </td>
+            );
+          })}
+        </tr>
+      );
+    });
 
   return (
     <>
@@ -200,18 +334,18 @@ export default function CoordinatorView({ page = 'overview' }) {
                 <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-4">התפלגות לפי קטגוריות ראשיות</p>
                 <div className="h-[280px] relative">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart margin={{ top: 24, right: 88, bottom: 24, left: 88 }}>
                       <Pie 
                         data={mainStats} 
                         cx="50%" 
                         cy="50%" 
-                        innerRadius={65} 
-                        outerRadius={95} 
+                        innerRadius={48} 
+                        outerRadius={60} 
                         paddingAngle={2} 
                         dataKey="value" 
                         stroke="none"
-                        label={renderPieLabel}
-                        labelLine={{ stroke: '#cbd5e1', strokeWidth: 1 }}
+                        label={renderPieLabelOutside}
+                        labelLine={false}
                       >
                         {mainStats.map((entry, index) => <Cell key={index} fill={BRAND_CHART_COLORS[index % BRAND_CHART_COLORS.length]} />)}
                       </Pie>
@@ -226,15 +360,22 @@ export default function CoordinatorView({ page = 'overview' }) {
                 <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-4">טופ 5 המענים השכיחים ביותר</p>
                 <div className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={subStatsTop5} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                    <BarChart data={subStatsTop5} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                      <XAxis type="number" hide />
-                      <YAxis dataKey="sub" type="category" tick={{ fontSize: 13, fill: '#002855', fontWeight: 600 }} width={160} axisLine={false} orientation="right" textAnchor="start" dx={5} />
+                      <XAxis type="number" hide domain={[0, 'dataMax + 20']} />
+                      <YAxis dataKey="sub" type="category" hide width={0} />
                       <Tooltip contentStyle={ZEN_TOOLTIP} itemStyle={{ color: '#4f5e7f', fontWeight: 'bold' }} />
-                      <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={26}>
-                        {subStatsTop5.map((entry, i) => <Cell key={i} fill={entry.main === "בירוקרטיה וזכויות" ? '#4f5e7f' : '#445272'} opacity={entry.main === "בירוקרטיה וזכויות" ? 1 : 0.8} />)}
-                        <LabelList dataKey="count" position="left" offset={15} style={{ fill: '#002855', fontWeight: '900', fontSize: '14px' }} />
-                      </Bar>
+                      <Bar
+                        dataKey="count"
+                        barSize={34}
+                        isAnimationActive={false}
+                        shape={(barProps) =>
+                          renderBarWithCenterLabel({
+                            ...barProps,
+                            payload: subStatsTop5[barProps.index],
+                          })
+                        }
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -304,31 +445,18 @@ export default function CoordinatorView({ page = 'overview' }) {
                   </tr>
                 </thead>
                 <tbody className="text-on-surface">
-                  {coordinators.map((coordinator, cIdx) => {
-                    const coordinatorTotal = sortedTasks.reduce((sum, task) => sum + task.values[cIdx], 0);
-                    return (
-                      <tr key={cIdx} className="hover:bg-surface-container border-b border-outline-variant/20 transition-colors">
-                        <td className="py-3 px-4 text-sm font-bold text-primary bg-surface-container-low sticky right-0 z-10 shadow-[2px_0_8px_-2px_rgba(0,71,149,0.08)] text-right border-l border-outline-variant/25">
-                          <div className="text-[14px] leading-none">{coordinator}</div>
-                          <div className="text-[10px] text-brand-yellow-dark font-bold mt-1.5 uppercase">סה"כ משימות: {coordinatorTotal}</div>
-                        </td>
-                        {sortedTasks.map((task, tIdx) => {
-                          const val = task.values[cIdx];
-                          const taskTotal = task.values.reduce((a, b) => a + b, 0);
-                          return (
-                            <td key={tIdx} className={`py-1 px-2 border-l border-outline-variant/30 text-center transition-all ${getHeatColorClass(val, taskTotal)}`}>
-                              {val > 0 ? (
-                                <div className="flex flex-col items-center justify-center">
-                                  <span className="text-[16px] leading-none">{val}</span>
-                                  <span className="text-[10px] opacity-80 mt-0.5">{((val/taskTotal)*100).toFixed(0)}%</span>
-                                </div>
-                              ) : <span className="font-bold">-</span>}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
+                  <tr className="bg-primary-container/30">
+                    <td colSpan={sortedTasks.length + 1} className="py-2 px-4 text-[11px] font-extrabold text-primary sticky right-0">
+                      פעילים ({ACTIVE_COORDINATORS.length})
+                    </td>
+                  </tr>
+                  {renderHeatmapRows(ACTIVE_COORDINATORS, 'פעיל', 'bg-emerald-100 text-emerald-800')}
+                  <tr className="bg-surface-container">
+                    <td colSpan={sortedTasks.length + 1} className="py-2 px-4 text-[11px] font-extrabold text-on-surface-variant sticky right-0">
+                      לא פעילים ({INACTIVE_COORDINATORS.length})
+                    </td>
+                  </tr>
+                  {renderHeatmapRows(INACTIVE_COORDINATORS, 'לא פעיל', 'bg-surface-container-high text-outline-variant')}
                 </tbody>
               </table>
             </div>
@@ -338,130 +466,202 @@ export default function CoordinatorView({ page = 'overview' }) {
         {/* --- טאב 3: פרופיל DNA מקצועי --- */}
         {page === 'dna' && (
           <div className="space-y-4 animate-fade-in">
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-2 flex flex-wrap items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
                 <SectionIcon name="hub" />
                 <div>
-                    <h2 className="text-xl font-extrabold text-primary tracking-tight">פרופיל DNA מקצועי למתכלל</h2>
-                    <p className="text-on-surface-variant text-[11px] font-medium">ניתוח פעילות ממוקד, זיהוי חוזקות והזדמנויות לפיתוח מקצועי</p>
+                  <h2 className="text-xl font-extrabold text-primary tracking-tight">פרופיל DNA מקצועי למתכלל</h2>
+                  <p className="text-on-surface-variant text-[11px] font-medium">
+                    {ACTIVE_COORDINATORS.length} פעילים · {INACTIVE_COORDINATORS.length} לא פעילים
+                  </p>
                 </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              
-              {/* כרטיס פרופיל וגרף מכ"ם */}
-              <div className="lg:col-span-4 bg-surface-container-low p-6 rounded-none shadow-soft border-b-2 border-primary relative overflow-hidden flex flex-col">
-                <div className="flex items-center gap-4 mb-6 relative z-10 border-b border-outline-variant/25 pb-4">
-                  <div className="w-12 h-12 bg-primary-container rounded-none flex items-center justify-center border border-primary/20/20">
-                    <span>👤</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">בחר מתכלל מתוך הרשימה:</p>
-                    <select 
-                      value={selectedCoordinator}
-                      onChange={(e) => setSelectedCoordinator(e.target.value)}
-                      className="w-full bg-surface-container border border-outline-variant/30 rounded py-1 px-2 text-lg font-black text-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer"
-                    >
-                      {coordinators.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-4 bg-surface-container-low p-4 rounded-xl shadow-soft border border-outline-variant/25 flex flex-col">
+                <div className="flex items-center gap-3 mb-3 pb-3 border-b border-outline-variant/20">
+                  <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-lg">👤</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-on-surface-variant font-bold mb-1">בחירת מתכלל</p>
+                    <CoordinatorSelect value={selectedCoordinator} onChange={setSelectedCoordinator} />
                   </div>
                 </div>
 
-                <div className="h-[280px] mb-4">
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+                  <span className={`rounded-full px-2 py-0.5 font-bold ${isSelectedActive ? 'bg-emerald-100 text-emerald-800' : 'bg-surface-container-high text-outline-variant'}`}>
+                    {isSelectedActive ? 'פעיל' : 'לא פעיל'}
+                  </span>
+                  <span className="font-bold text-primary">{coordinatorProfile.coordinatorTotal} משימות</span>
+                  <span className="text-on-surface-variant">· {coordinatorProfile.orgSharePct}% מכלל הפעילות</span>
+                  <span className="text-on-surface-variant">· ליבה: <strong className="text-primary">{coordinatorProfile.topCategory}</strong> ({coordinatorProfile.topCategoryPct}%)</span>
+                </div>
+
+                <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={coordinatorDnaData}>
-                      <PolarGrid stroke="#e6f0fa" strokeWidth={2} />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#002855', fontSize: 11, fontWeight: 700 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 40]} tick={false} axisLine={false} />
-                      <Radar name={selectedCoordinator} dataKey="A" stroke="#4f5e7f" strokeWidth={3} fill="#4f5e7f" fillOpacity={0.2} dot={{ r: 4, fill: '#af3030', strokeWidth: 2, stroke: '#4f5e7f' }} />
-                      <Tooltip contentStyle={ZEN_TOOLTIP} itemStyle={{ color: '#4f5e7f', fontWeight: 'bold' }} />
+                    <RadarChart
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="58%"
+                      data={coordinatorProfile.radarData}
+                      margin={{ top: 36, right: 72, bottom: 36, left: 72 }}
+                    >
+                      <PolarGrid stroke="#e2e8f0" strokeWidth={1.5} />
+                      <PolarAngleAxis
+                        dataKey="subject"
+                        tick={(props) => <PolarAngleTick {...props} dataMap={radarDataMap} />}
+                      />
+                      <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
+                      <Radar
+                        name={selectedCoordinator}
+                        dataKey="A"
+                        stroke="#4f5e7f"
+                        strokeWidth={2.5}
+                        fill="#4f5e7f"
+                        fillOpacity={0.18}
+                        dot={{ r: 4, fill: '#ca8a04', strokeWidth: 2, stroke: '#4f5e7f' }}
+                      />
+                      <Tooltip
+                        contentStyle={ZEN_TOOLTIP}
+                        formatter={(value, _name, item) => [
+                          `${value} משימות (${item.payload.pct}% מהפרופיל)`,
+                          item.payload.subject,
+                        ]}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-auto">
-                  <div className="bg-primary-container/50 p-4 rounded-none border border-primary/20/10 flex flex-col items-center">
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wide">דירוג עומס</p>
-                    <p className="text-xl font-black text-primary mt-1">{dynamicInsights.status}</p>
-                  </div>
-                  <div className="bg-secondary-container/50 p-4 rounded-none border border-primary/30/20 flex flex-col items-center text-center">
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wide">תחום ליבה</p>
-                    <p className="text-[15px] font-black text-brand-yellow-dark leading-tight mt-1 px-1">{dynamicInsights.topCategory}</p>
-                  </div>
-                </div>
               </div>
 
-              {/* אזור פעילות ראשי */}
-              <div className="lg:col-span-8 space-y-5">
-                
-                {/* Treemap כרטיס */}
-                <div className="bg-surface-container-low p-6 rounded-none shadow-soft border border-outline-variant/30 flex flex-col h-[320px]">
-                  <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span>🌳</span> פירוט ההשקעה לפי משימות - {selectedCoordinator}
+              <div className="lg:col-span-8 space-y-4">
+                <div className="bg-surface-container-low p-5 rounded-xl shadow-soft border border-outline-variant/25">
+                  <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-4">
+                    פיזור מענים — {selectedCoordinator}
                   </h3>
-                  <div className="flex-1 border border-outline-variant/20 rounded bg-surface-container">
-                    {treeData.length > 0 ? (
+                  <div className="h-[420px]">
+                    {coordinatorProfile.pieData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <Treemap data={treeData} dataKey="size" aspectRatio={4 / 3} stroke="#f4f4ef" strokeWidth={1} isAnimationActive={false} content={<CustomTreemapContent />}>
-                          <Tooltip contentStyle={ZEN_TOOLTIP} itemStyle={{ color: '#4f5e7f', fontWeight: 'bold' }} />
-                        </Treemap>
+                        <PieChart margin={{ top: 36, right: 120, bottom: 36, left: 120 }}>
+                          <Pie
+                            data={coordinatorProfile.pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={72}
+                            outerRadius={108}
+                            paddingAngle={3}
+                            dataKey="value"
+                            stroke="#faf9f5"
+                            strokeWidth={2}
+                            label={renderDnaPieLabelOutside}
+                            labelLine={false}
+                          >
+                            {coordinatorProfile.pieData.map((entry, index) => (
+                              <Cell key={entry.name} fill={BRAND_CHART_COLORS[index % BRAND_CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <text x="50%" y="46%" textAnchor="middle" className="fill-on-surface-variant text-[11px] font-bold uppercase">סה״כ</text>
+                          <text x="50%" y="58%" textAnchor="middle" className="fill-primary text-4xl font-black">
+                            {coordinatorProfile.coordinatorTotal}
+                          </text>
+                          <Tooltip contentStyle={ZEN_TOOLTIP} formatter={(v, _n, item) => [`${v} משימות · ${item.payload.name}`, '']} />
+                        </PieChart>
                       </ResponsiveContainer>
                     ) : (
-                      <div className="h-full flex items-center justify-center">
-                        <div className="text-center text-outline-variant">
-                          <span className="material-symbols-outlined text-sm text-tertiary">warning</span>
-                          <p className="font-bold text-sm">אין נתונים מספקים להצגה</p>
-                        </div>
+                      <div className="h-full flex items-center justify-center text-sm text-outline-variant font-medium">
+                        אין נתוני פעילות למתכלל זה
                       </div>
                     )}
                   </div>
+                  {serviceSpreadPie.length > 0 && (
+                    <p className="mt-2 text-[10px] text-on-surface-variant">
+                      מענה מוביל: <strong className="text-primary">{serviceSpreadPie[0].name}</strong> ({serviceSpreadPie[0].value} משימות)
+                    </p>
+                  )}
                 </div>
-
-                {/* באנר תובנות אסטרטגיות */}
-                <div className="bg-surface-container-lowest p-6 rounded-none shadow-soft border border-outline-variant/30 relative overflow-hidden">
-                  <span>💡</span>
-                  <h4 className="text-lg font-black tracking-wide mb-4 flex items-center gap-2 relative z-10 text-primary">
-                    <span>💡</span>
-                    נקודות למחשבה ופיתוח צוותי
-                  </h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                    <div className="bg-surface-container-low p-4 rounded border border-outline-variant/20 border-r-4 border-r-brand-blue">
-                      <p className="text-primary font-bold text-[11px] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-sm">trending_up</span> חוזקה ארגונית</p>
-                      <p className="text-sm font-medium leading-relaxed text-on-surface">נפח פעילות מרכזי ב<strong className="text-primary">{dynamicInsights.topCategory}</strong>. כדאי להיעזר במתכלל לשיתוף ידע מול העמיתים בנושאי {dynamicInsights.strength}.</p>
-                    </div>
-                    <div className="bg-surface-container-low p-4 rounded border border-outline-variant/20 border-r-4 border-r-outline-variant">
-                      <p className="text-on-surface-variant font-bold text-[11px] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-sm">trending_down</span> אזור לחיזוק</p>
-                      <p className="text-sm font-medium leading-relaxed text-on-surface">נפח פעילות נמוך יחסית ב<strong className="text-primary">{dynamicInsights.growth.split(',')[0]}</strong>. מומלץ לתגבר היכרות עם נושאי {dynamicInsights.growth}.</p>
-                    </div>
-                  </div>
-                </div>
-
               </div>
             </div>
-            
-            {/* טבלת מומחים */}
-            <div className="bg-surface-container-low p-5 rounded-none shadow-soft border border-outline-variant/30 mt-5">
-                <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span>🏆</span> מוקדי ידע ארגוניים לכל תחום
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {categories.map((cat, i) => {
-                    const topPersonForCat = coordinators.reduce((best, current) => {
-                    const currentVal = rawData.filter(d => d.main === cat).reduce((sum, row) => sum + row.values[coordinators.indexOf(current)], 0);
-                    const bestVal = rawData.filter(d => d.main === cat).reduce((sum, row) => sum + row.values[coordinators.indexOf(best)], 0);
-                    return currentVal > bestVal ? current : best;
-                    }, coordinators[0]);
-                    
-                    return (
-                    <div key={i} className="p-3 rounded bg-surface-container border border-outline-variant/30 border-t-2" style={{ borderTopColor: BRAND_CHART_COLORS[i % BRAND_CHART_COLORS.length] }}>
-                        <p className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 truncate" title={cat}>{cat}</p>
-                        <p className="text-[14px] font-black text-primary">{topPersonForCat}</p>
-                    </div>
-                    );
-                })}
-                </div>
+
+            <div className="bg-surface-container-low p-4 rounded-xl shadow-soft border border-outline-variant/25">
+              <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-base text-primary">school</span>
+                מוקדי ידע ארגוניים — כל המתכללים
+              </h3>
+              <div className="overflow-x-auto scrollbar-thin max-h-[320px] border border-outline-variant/20 rounded-lg">
+                <table className="w-full text-right text-[12px] border-collapse">
+                  <thead className="bg-surface-container sticky top-0 z-10">
+                    <tr className="text-[10px] uppercase text-on-surface-variant">
+                      <th className="py-2 px-3 font-bold">#</th>
+                      <th className="py-2 px-3 font-bold">מתכלל</th>
+                      <th className="py-2 px-3 font-bold text-center">סטטוס</th>
+                      <th className="py-2 px-3 font-bold text-center">משימות</th>
+                      <th className="py-2 px-3 font-bold text-center">% מכלל</th>
+                      <th className="py-2 px-3 font-bold">חוזק (תחום)</th>
+                      <th className="py-2 px-3 font-bold text-center">% בתחום</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/15">
+                    {orgKnowledgeList.map((row, idx) => (
+                      <tr
+                        key={row.name}
+                        className={`hover:bg-primary-container/20 transition-colors ${row.name === selectedCoordinator ? 'bg-primary-container/35 font-semibold' : ''}`}
+                      >
+                        <td className="py-2 px-3 text-center text-primary font-bold">{idx + 1}</td>
+                        <td className="py-2 px-3 font-bold text-primary">{row.name}</td>
+                        <td className="py-2 px-3 text-center">
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${row.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-surface-container-high text-outline-variant'}`}>
+                            {row.isActive ? 'פעיל' : 'לא פעיל'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-center font-black">{row.total}</td>
+                        <td className="py-2 px-3 text-center">
+                          <span className="rounded-md bg-primary-container/40 px-2 py-0.5 font-bold text-primary">{row.orgPct}%</span>
+                        </td>
+                        <td className="py-2 px-3 text-on-surface-variant text-[11px]">{row.topCategory}</td>
+                        <td className="py-2 px-3 text-center font-bold text-on-surface">{row.topCategoryPct}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {categoryRosters.map((block, i) => (
+                <div
+                  key={block.category}
+                  className="bg-surface-container-low p-3 rounded-xl border border-outline-variant/25 border-t-[3px]"
+                  style={{ borderTopColor: BRAND_CHART_COLORS[i % BRAND_CHART_COLORS.length] }}
+                >
+                  <h4 className="text-[11px] font-extrabold text-primary mb-2 truncate" title={block.category}>
+                    {block.category}
+                  </h4>
+                  <ul className="max-h-[200px] overflow-y-auto scrollbar-thin space-y-1.5">
+                    {block.roster.map((person, rIdx) => (
+                      <li
+                        key={person.name}
+                        className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[11px] transition-colors ${
+                          person.isActive
+                            ? 'bg-surface-container hover:bg-primary-container/25'
+                            : 'bg-surface-container-high/80 opacity-75'
+                        }`}
+                      >
+                        <span className={`font-bold truncate ${person.isActive ? 'text-primary' : 'text-outline-variant'}`}>
+                          <span className="text-on-surface-variant font-medium ml-1">{rIdx + 1}.</span> {person.name}
+                          {!person.isActive && (
+                            <span className="mr-1 rounded-full bg-surface-container-high px-1.5 py-0.5 text-[8px] font-bold text-outline-variant">
+                              לא פעיל
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 font-black text-on-surface">
+                          {person.value} <span className="text-on-surface-variant font-semibold">({person.catPct}%)</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

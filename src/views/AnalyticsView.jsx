@@ -14,12 +14,12 @@ import MatrixFullscreenOverlay from '../components/layout/MatrixFullscreenOverla
 import SectionIcon from '../components/ui/SectionIcon.jsx';
 
 
-function renderDualCell(fam, task) {
+function renderDualCell(fam, task, familyLabel = LABELS.families) {
   if (!fam && !task) return <span className="text-outline-variant">-</span>;
   return (
     <div className="flex items-center justify-center gap-0.5 dir-ltr flex-row-reverse">
-      <div className="flex flex-col items-center bg-surface-container-low border border-outline-variant/20 rounded-l-md px-2 py-1 min-w-[36px]">
-        <span className="text-[9px] text-outline-variant font-bold mb-0.5">{LABELS.families}</span>
+      <div className="flex flex-col items-center bg-surface-container-low border border-outline-variant/20 rounded-l-md px-2 py-1 min-w-[40px]">
+        <span className="text-[9px] text-outline-variant font-bold mb-0.5 leading-tight text-center">{familyLabel}</span>
         <span className="text-sm font-bold text-on-surface leading-none">{fam || 0}</span>
       </div>
       <div className="flex flex-col items-center bg-primary-container/40 border border-primary-container rounded-r-md px-2 py-1 min-w-[36px]">
@@ -27,6 +27,44 @@ function renderDualCell(fam, task) {
         <span className="text-sm font-bold text-primary-dim leading-none">{task || 0}</span>
       </div>
     </div>
+  );
+}
+
+/** בר אופקי — תווית לבנה בתוך הבר (תת-סיווג + משפחות + SLA) */
+function renderSubCategoryBarWithLabel(props) {
+  const { x, y, width, height, payload, index } = props;
+  const topTen = subCategoryData.slice(0, 10);
+  const entry = payload ?? topTen[index];
+  if (!entry?.sub) return null;
+
+  const barX = Number(x);
+  const barW = Number(width);
+  const barY = Number(y);
+  const barH = Number(height);
+  if (!barW || !barH) return null;
+
+  const fill = COLORS[entry.main] || '#64748b';
+  const cx = barX + barW / 2;
+  const cy = barY + barH / 2;
+  const sub = entry.sub.length > 22 ? `${entry.sub.slice(0, 20)}…` : entry.sub;
+  const label = `${sub} · ${entry.families} משפחות · ${entry.sla} ${LABELS.dayShort}`;
+
+  return (
+    <g>
+      <rect x={barX} y={barY} width={barW} height={barH} fill={fill} rx={4} ry={4} opacity={0.94} />
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="#ffffff"
+        fontSize={10}
+        fontWeight={800}
+        style={{ pointerEvents: 'none', textShadow: '0 1px 4px rgba(0,0,0,0.55)' }}
+      >
+        {label}
+      </text>
+    </g>
   );
 }
 
@@ -60,31 +98,93 @@ export default function AnalyticsView({ page = 'intensity' }) {
     <div className="space-y-8">
       {page === 'intensity' && (
         <div className="space-y-8">
-          
+
+          <div>
+            <h2 className="text-lg font-extrabold text-on-surface mb-4 flex items-center gap-2">
+              <SectionIcon name="pie_chart" />
+              {LABELS.overviewSectionTitle}
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[400px]">
+                <div className="mb-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <SectionIcon name="bar_chart" />
+                    <h3 className="text-xl font-bold text-on-surface">{LABELS.overviewMain}</h3>
+                  </div>
+                  <p className="text-sm text-on-surface-variant">{LABELS.overviewMainDesc}</p>
+                </div>
+                <div className="flex-grow w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={mainCategoryData} margin={{ top: 30, right: 10, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="category" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} />
+                      <YAxis hide domain={[0, 'dataMax + 20']} />
+                      <Tooltip content={<CustomTooltipMain />} cursor={{ fill: '#f8fafc' }} />
+                      <Bar dataKey="families" name={LABELS.spreadUniqueFamilies} radius={[6, 6, 0, 0]} barSize={45}>
+                        {mainCategoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[entry.category] || '#94a3b8'} />
+                        ))}
+                        <LabelList dataKey="avgSla" position="top" formatter={(value) => `${value} ימים`} fill="#334155" fontSize={12} fontWeight="bold" offset={10}/>
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[480px]">
+                <div className="mb-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <SectionIcon name="summarize" />
+                    <h3 className="text-xl font-bold text-on-surface">{LABELS.overviewSub}</h3>
+                  </div>
+                  <p className="text-sm text-on-surface-variant">{LABELS.overviewSubDesc}</p>
+                </div>
+                <div className="flex-grow w-full min-h-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={subCategoryData.slice(0, 10)} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal stroke="#f1f5f9" vertical={false} />
+                      <XAxis type="number" hide domain={[0, 'dataMax + 15']} />
+                      <YAxis type="category" dataKey="sub" hide width={0} />
+                      <Tooltip content={<CustomTooltipSub />} cursor={{ fill: '#f8fafc' }} />
+                      <Bar
+                        dataKey="families"
+                        name={LABELS.spreadUniqueFamilies}
+                        barSize={32}
+                        isAnimationActive={false}
+                        shape={renderSubCategoryBarWithLabel}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-surface-container-lowest p-6 md:p-8 rounded-none shadow-xl border border-outline-variant/15 grid grid-cols-1 lg:grid-cols-3 gap-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/40 rounded-full -z-10 opacity-60"></div>
             <div className="lg:col-span-2 border-l border-outline-variant/15 pl-4 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-3">
                 <SectionIcon name="balance" />
-                <h3 className="text-xl font-extrabold text-on-surface">החלטה מבוססת נרטיב: תפוצה מול עצימות</h3>
+                <h3 className="text-xl font-extrabold text-on-surface">{LABELS.decisionTitle}</h3>
               </div>
-              <div className="text-on-surface-variant text-sm leading-relaxed mb-4">
-                הוספת הניתוח המשלב בין "מספר משפחות" ל"מספר משימות" מאפשרת לזהות האם קפיצה בעומס נובעת מ<strong>בעיה רוחבית</strong> שפוגעת בהמון משפחות שונות, או מ<strong>בעיה נקודתית</strong> שבה מעט משפחות צורכות עשרות פעולות במקביל (לדוגמה: מוניות, סיוע משפטי).
-              </div>
+              <p className="text-on-surface-variant text-xs leading-relaxed mb-2">{LABELS.analysisGoal}</p>
+              <div
+                className="text-on-surface-variant text-sm leading-relaxed mb-4"
+                dangerouslySetInnerHTML={{ __html: LABELS.decisionBodyDetail }}
+              />
             </div>
             
             <div className="flex flex-col justify-center space-y-3 bg-surface-container-low/80 p-5 rounded-none border border-outline-variant/20">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-rose-900 bg-rose-100 border border-rose-200/60 px-2.5 py-1 rounded-none">מורכבות קיצונית</span>
-                <span className="text-on-surface-variant font-bold">מעל 1.8 משימות למשפחה</span>
+                <span className="font-bold text-yellow-900 bg-yellow-100 border border-yellow-300/80 px-2.5 py-1 rounded-none">מורכבות קיצונית</span>
+                <span className="text-on-surface-variant font-bold">מעל 1.8 משימות למשפחה ייחודית</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-amber-900 bg-amber-100 border border-amber-200/60 px-2.5 py-1 rounded-none">עומס ממוצע</span>
-                <span className="text-on-surface-variant font-bold">~ 1.5 משימות למשפחה</span>
+                <span className="text-on-surface-variant font-bold">~ 1.5 משימות למשפחה ייחודית</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-emerald-900 bg-emerald-100 border border-emerald-200/60 px-2.5 py-1 rounded-none">שירות חלק</span>
-                <span className="text-on-surface-variant font-bold">יחס 1:1 למשפחה</span>
+                <span className="text-on-surface-variant font-bold">יחס 1:1 למשפחה ייחודית</span>
               </div>
             </div>
           </div>
@@ -95,8 +195,8 @@ export default function AnalyticsView({ page = 'intensity' }) {
               
               <div className="mb-6 space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold text-on-surface">מפת עומסים לפי משימות (Count)</h2>
-                  <p className="text-xs text-on-surface-variant mt-1">מפת החום משקפת את סך המשימות. לחץ על שורה לניתוח השוואתי מול המשפחות.</p>
+                  <h2 className="text-xl font-bold text-on-surface">{LABELS.heatmapTasksTitle}</h2>
+                  <p className="text-xs text-on-surface-variant mt-1">{LABELS.heatmapTasksDesc}</p>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
@@ -129,10 +229,22 @@ export default function AnalyticsView({ page = 'intensity' }) {
                   <thead>
                     <tr className="border-b border-outline-variant/15 text-outline-variant text-xs font-bold sticky top-0 bg-surface-container-lowest z-10 pb-2">
                       <th className="pb-3 pr-2">תת-סיווג</th>
-                      <th className="pb-3 text-center">ינואר</th>
-                      <th className="pb-3 text-center">פברואר</th>
-                      <th className="pb-3 text-center">מרץ</th>
-                      <th className="pb-3 text-center">אפריל</th>
+                      <th className="pb-3 text-center align-bottom">
+                        <span className="block">{LABELS.months[0]}</span>
+                        <span className="mt-0.5 block text-[9px] font-medium text-outline-variant">{LABELS.heatmapMonthHint}</span>
+                      </th>
+                      <th className="pb-3 text-center align-bottom">
+                        <span className="block">{LABELS.months[1]}</span>
+                        <span className="mt-0.5 block text-[9px] font-medium text-outline-variant">{LABELS.heatmapMonthHint}</span>
+                      </th>
+                      <th className="pb-3 text-center align-bottom">
+                        <span className="block">{LABELS.months[2]}</span>
+                        <span className="mt-0.5 block text-[9px] font-medium text-outline-variant">{LABELS.heatmapMonthHint}</span>
+                      </th>
+                      <th className="pb-3 text-center align-bottom">
+                        <span className="block">{LABELS.months[3]}</span>
+                        <span className="mt-0.5 block text-[9px] font-medium text-outline-variant">{LABELS.heatmapMonthHint}</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/15 text-sm">
@@ -191,6 +303,8 @@ export default function AnalyticsView({ page = 'intensity' }) {
                     {selectedSubCategory?.main}
                   </span>
                   <h3 className="text-2xl font-black text-on-surface mt-2.5 truncate" title={selectedSubCategory?.sub}>{selectedSubCategory?.sub}</h3>
+                  <p className="text-xs text-on-surface-variant mt-1">{LABELS.trendSectionTitle}</p>
+                  <p className="text-[10px] text-outline-variant">{LABELS.trendSectionDesc}</p>
                 </div>
 
                 <div className="flex-grow flex items-center justify-center">
@@ -203,7 +317,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
                       <Legend verticalAlign="top" height={36} wrapperStyle={{fontSize: '12px', fontWeight: 'bold', color: '#475569'}} />
                       
                       <Bar 
-                        name="תפוצה: משפחות מעורבות" 
+                        name={LABELS.chartMonthlyUniqueFam}
                         dataKey="fam" 
                         barSize={40} 
                         fill="#cbd5e1" 
@@ -211,7 +325,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
                       />
                       
                       <Line 
-                        name="עומס: סך משימות שנפתחו" 
+                        name={LABELS.chartMonthlyTasks}
                         type="monotone" 
                         dataKey="tasks" 
                         stroke={COLORS[selectedSubCategory?.main]} 
@@ -227,7 +341,7 @@ export default function AnalyticsView({ page = 'intensity' }) {
               <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15">
                 <h4 className="font-extrabold text-on-surface mb-2.5 flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">info</span>
-                  אפיון עצימות: {intensityData.label}
+                  {LABELS.intensityTitle} {intensityData.label}
                 </h4>
                 <div className="text-sm text-on-surface-variant leading-relaxed mb-4">
                   {intensityData.desc}
@@ -235,16 +349,16 @@ export default function AnalyticsView({ page = 'intensity' }) {
                 
                 <div className="grid grid-cols-2 gap-4 border-t border-outline-variant/15 pt-4 text-xs">
                   <div className={`p-3.5 rounded-none border ${intensityData.color}`}>
-                    <span className="block mb-1 font-semibold opacity-80">יחס משימות למשפחה</span>
+                    <span className="block mb-1 font-semibold opacity-80">{LABELS.ratioLabel}</span>
                     <span className="text-2xl font-black">
                       {intensityData.ratio}
                     </span>
                   </div>
                   <div className="bg-surface-container-low p-3.5 rounded-none border border-outline-variant/15">
-                    <span className="text-outline-variant block mb-1 font-semibold">סך הכל (ינו'-אפר')</span>
+                    <span className="text-outline-variant block mb-1 font-semibold">{LABELS.totalLabel}</span>
                     <div className="text-base font-bold text-on-surface">
-                      {totalTasksSelected} משימות<br/>
-                      <span className="text-on-surface-variant text-xs">{totalFamiliesSelected} משפחות</span>
+                      {totalTasksSelected} {LABELS.tasks}<br/>
+                      <span className="text-on-surface-variant text-xs">{totalFamiliesSelected} {LABELS.spreadUniqueFamilies}</span>
                     </div>
                   </div>
                 </div>
@@ -262,11 +376,10 @@ export default function AnalyticsView({ page = 'intensity' }) {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <SectionIcon name="table_chart" />
-                <h2 className="text-2xl font-extrabold text-on-surface">טבלת פיזור מורחבת</h2>
+                <h2 className="text-2xl font-extrabold text-on-surface">{LABELS.spreadTitle}</h2>
               </div>
-              <p className="text-on-surface-variant">
-                השוואה חודשית מפורטת: כמות המשפחות אל מול המשימות בכל תת-סיווג. היחס הכללי בעמודה השמאלית מתריע על "פינג-פונג" מול משפחות.
-              </p>
+              <p className="text-on-surface-variant">{LABELS.spreadDesc}</p>
+              <p className="mt-1 text-xs text-outline-variant">{LABELS.spreadMonthFamiliesHint}</p>
             </div>
             
             <div className="flex gap-3">
@@ -288,11 +401,23 @@ export default function AnalyticsView({ page = 'intensity' }) {
               <thead className="bg-surface-container-low sticky top-0 z-20">
                 <tr className="border-b border-outline-variant/20">
                   <th className="py-4 px-4 text-on-surface font-bold w-1/5 shadow-sm">קטגוריה ותת-סיווג</th>
-                  <th className="py-4 px-2 text-center text-on-surface font-bold shadow-sm">ינואר</th>
-                  <th className="py-4 px-2 text-center text-on-surface font-bold shadow-sm">פברואר</th>
-                  <th className="py-4 px-2 text-center text-on-surface font-bold shadow-sm">מרץ</th>
-                  <th className="py-4 px-2 text-center text-on-surface font-bold shadow-sm">אפריל</th>
-                  <th className="py-4 px-4 text-center text-on-surface font-extrabold bg-surface-container-low shadow-sm border-r border-outline-variant/20">יחס עצימות כללי</th>
+                  <th className="py-3 px-2 text-center text-on-surface font-bold shadow-sm align-bottom">
+                    <span className="block">{LABELS.months[0]}</span>
+                    <span className="mt-1 block text-[9px] font-medium text-outline-variant">{LABELS.spreadUniqueFamiliesShort} / {LABELS.tasks}</span>
+                  </th>
+                  <th className="py-3 px-2 text-center text-on-surface font-bold shadow-sm align-bottom">
+                    <span className="block">{LABELS.months[1]}</span>
+                    <span className="mt-1 block text-[9px] font-medium text-outline-variant">{LABELS.spreadUniqueFamiliesShort} / {LABELS.tasks}</span>
+                  </th>
+                  <th className="py-3 px-2 text-center text-on-surface font-bold shadow-sm align-bottom">
+                    <span className="block">{LABELS.months[2]}</span>
+                    <span className="mt-1 block text-[9px] font-medium text-outline-variant">{LABELS.spreadUniqueFamiliesShort} / {LABELS.tasks}</span>
+                  </th>
+                  <th className="py-3 px-2 text-center text-on-surface font-bold shadow-sm align-bottom">
+                    <span className="block">{LABELS.months[3]}</span>
+                    <span className="mt-1 block text-[9px] font-medium text-outline-variant">{LABELS.spreadUniqueFamiliesShort} / {LABELS.tasks}</span>
+                  </th>
+                  <th className="py-4 px-4 text-center text-on-surface font-extrabold bg-surface-container-low shadow-sm border-r border-outline-variant/20">{LABELS.intensityCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/15">
@@ -308,16 +433,16 @@ export default function AnalyticsView({ page = 'intensity' }) {
                         <div className="text-[10px] font-semibold" style={{ color: COLORS[item.main] }}>{item.main}</div>
                       </td>
                       <td className="py-3 px-2 align-middle">
-                        {renderDualCell(item.janF, item.janT)}
+                        {renderDualCell(item.janF, item.janT, LABELS.spreadUniqueFamiliesShort)}
                       </td>
                       <td className="py-3 px-2 align-middle">
-                        {renderDualCell(item.febF, item.febT)}
+                        {renderDualCell(item.febF, item.febT, LABELS.spreadUniqueFamiliesShort)}
                       </td>
                       <td className="py-3 px-2 align-middle">
-                        {renderDualCell(item.marF, item.marT)}
+                        {renderDualCell(item.marF, item.marT, LABELS.spreadUniqueFamiliesShort)}
                       </td>
                       <td className="py-3 px-2 align-middle">
-                        {renderDualCell(item.aprF, item.aprT)}
+                        {renderDualCell(item.aprF, item.aprT, LABELS.spreadUniqueFamiliesShort)}
                       </td>
                       <td className="py-3 px-4 text-center bg-surface-container-low/50 border-r border-outline-variant/15">
                         <div className="flex flex-col items-center justify-center">
@@ -353,10 +478,12 @@ export default function AnalyticsView({ page = 'intensity' }) {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <SectionIcon name="psychology" />
-                <h2 className="text-2xl font-extrabold text-on-surface">מטריצת החלטות להעברת שרביט</h2>
+                <h2 className="text-2xl font-extrabold text-on-surface">{LABELS.matrixTitle}</h2>
               </div>
               <p className="text-on-surface-variant">
-                זיהוי ויזואלי של תהליכים דורשי התערבות: <strong>משימות ברביע האדום</strong> מחייבות מינוי רפרנט מקצועי.
+                {LABELS.matrixDescBefore}
+                <strong>{LABELS.matrixDescBold}</strong>
+                {LABELS.matrixDescAfter}
               </p>
             </div>
 
@@ -385,63 +512,6 @@ export default function AnalyticsView({ page = 'intensity' }) {
           </div>
         </div>
       )}
-      {/* ======================= TAB 3: CATEGORY OVERVIEW VIEW ======================= */}
-      {page === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          
-          <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[400px]">
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-1">
-                <SectionIcon name="bar_chart" />
-                <h2 className="text-xl font-bold text-on-surface">מבט על: עומס לפי סיווג ראשי</h2>
-              </div>
-            </div>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mainCategoryData} margin={{ top: 30, right: 10, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="category" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} />
-                  <YAxis hide domain={[0, 'dataMax + 20']} />
-                  <Tooltip content={<CustomTooltipMain />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="families" radius={[6, 6, 0, 0]} barSize={45}>
-                    {mainCategoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[entry.category] || '#94a3b8'} />
-                    ))}
-                    <LabelList dataKey="avgSla" position="top" formatter={(value) => `${value} ימים`} fill="#334155" fontSize={12} fontWeight="bold" offset={10}/>
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className="bg-surface-container-lowest p-6 rounded-none shadow-lg border border-outline-variant/15 flex flex-col h-[400px]">
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-1">
-                <SectionIcon name="summarize" />
-                <h2 className="text-xl font-bold text-on-surface">{LABELS.overviewSub}</h2>
-              </div>
-              <p className="text-sm text-on-surface-variant">{LABELS.overviewSubDesc}</p>
-            </div>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={subCategoryData.slice(0, 10)} layout="vertical" margin={{ top: 10, right: 30, left: 100, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" hide domain={[0, 'dataMax + 10']} />
-                  <YAxis type="category" dataKey="sub" tick={{ fill: '#475569', fontSize: 12, fontWeight: 500 }} width={140} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltipSub />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="families" radius={[4, 0, 0, 4]} barSize={16}>
-                    {subCategoryData.slice(0, 10).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[entry.main] || '#94a3b8'} />
-                    ))}
-                    <LabelList dataKey="sla" position="right" formatter={(value) => `${value} ${LABELS.dayShort}`} fill="#64748b" fontSize={11} fontWeight="bold" offset={8} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-        </div>
-      )}
-
       <MatrixFullscreenOverlay
         open={isFullscreen}
         onClose={() => setIsFullscreen(false)}

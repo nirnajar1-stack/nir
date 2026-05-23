@@ -1,5 +1,6 @@
 import { mainCategoryData, subCategoryData } from '../data/analyticsData.js';
-import { coordinators, categories, rawData } from '../data/coordinatorData.js';
+import { categories, rawData } from '../data/coordinatorData.js';
+import { ACTIVE_COORDINATORS, INACTIVE_COORDINATORS } from './coordinatorStats.js';
 
 export function getAnalyticsKpis() {
   const totalFamilies = mainCategoryData.reduce((s, r) => s + r.families, 0);
@@ -19,5 +20,11 @@ export function getCoordinatorKpis() {
     (s, r) => s + r.values.reduce((a, b) => a + b, 0),
     0,
   );
-  return { totalTasks, coordinators: coordinators.length, categories: categories.length };
+  return {
+    totalTasks,
+    coordinators: ACTIVE_COORDINATORS.length + INACTIVE_COORDINATORS.length,
+    activeCoordinators: ACTIVE_COORDINATORS.length,
+    inactiveCoordinators: INACTIVE_COORDINATORS.length,
+    categories: categories.length,
+  };
 }

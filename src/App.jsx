@@ -7,6 +7,7 @@ import CoordinatorView from './views/CoordinatorView.jsx';
 import MethodologyView from './views/MethodologyView.jsx';
 import ServicesViewCards from './views/ServicesViewCards.jsx';
 import ServicesViewAtlas from './views/ServicesViewAtlas.jsx';
+import DevelopmentView from './views/DevelopmentView.jsx';
 import NewsTicker from './components/layout/NewsTicker.jsx';
 import ZenSidebar from './components/layout/ZenSidebar.jsx';
 import ZenHeader from './components/layout/ZenHeader.jsx';
@@ -24,11 +25,16 @@ function renderPageContent(group, sub) {
     return sub === 'atlas' ? <ServicesViewAtlas /> : <ServicesViewCards />;
   }
   if (group === 'analytics') return <AnalyticsView page={sub} />;
+  if (group === 'development') return <DevelopmentView />;
   return <CoordinatorView page={sub} />;
 }
 
-const SHOW_KPIS = new Set(['analytics', 'coordinators']);
-const SHOW_LEGEND = (group, sub) => group === 'analytics';
+const SHOW_KPIS = (group, sub) => {
+  if (group === 'coordinators') return true;
+  if (group === 'analytics' && sub !== 'spread') return true;
+  return false;
+};
+const SHOW_LEGEND = (group, sub) => group === 'analytics' && sub !== 'spread';
 
 export default function App() {
   const [activePage, setActivePage] = useHashPage();
@@ -68,7 +74,7 @@ export default function App() {
                 <p className="mt-1 text-xs text-outline-variant">עודכן לאחרונה: {DATA_UPDATED}</p>
               </motion.header>
 
-              {SHOW_KPIS.has(group) && (
+              {SHOW_KPIS(group, sub) && (
                 <motion.div variants={pageItemVariants}>
                   <PageKpis group={group} />
                 </motion.div>

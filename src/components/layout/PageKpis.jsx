@@ -1,4 +1,5 @@
-﻿import { getAnalyticsKpis, getCoordinatorKpis } from '../../utils/kpiStats.js';
+import { LABELS } from '../../data.js';
+import { getAnalyticsKpis, getCoordinatorKpis } from '../../utils/kpiStats.js';
 
 function KpiCard({ label, value, hint }) {
   return (
@@ -15,7 +16,7 @@ export default function PageKpis({ group }) {
     const k = getAnalyticsKpis();
     return (
       <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <KpiCard label="סה״כ משפחות" value={k.totalFamilies.toLocaleString('he-IL')} hint="ינואר–אפריל" />
+        <KpiCard label={LABELS.kpiFamilies} value={k.totalFamilies.toLocaleString('he-IL')} hint="ינואר–אפריל" />
         <KpiCard label="סה״כ משימות" value={k.totalTasks.toLocaleString('he-IL')} hint="כל תתי הסיווג" />
         <KpiCard label="SLA ממוצע" value={`${k.avgSla} ימ׳`} hint="לפי קטגוריה ראשית" />
         <KpiCard label="קטגוריות" value={k.categories} hint="סיווגים ראשיים" />
@@ -27,7 +28,11 @@ export default function PageKpis({ group }) {
   return (
     <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
       <KpiCard label="סה״כ משימות" value={k.totalTasks.toLocaleString('he-IL')} hint="ינואר" />
-      <KpiCard label="מתכללים" value={k.coordinators} />
+      <KpiCard
+        label="מתכללים"
+        value={`${k.activeCoordinators} פעילים · ${k.inactiveCoordinators} לא`}
+        hint={`${k.coordinators} סה״כ`}
+      />
       <KpiCard label="קטגוריות" value={k.categories} />
     </div>
   );

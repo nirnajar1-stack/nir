@@ -31,7 +31,7 @@ export const getContinuityClassification = (jan, feb, mar, apr) => {
   if (mean >= 20) {
     return {
       label: '\u05e7\u05d1\u05d5\u05e2 \u05d5\u05e2\u05de\u05d5\u05e1 (Core High)',
-      color: 'bg-rose-100 text-rose-900 border-rose-300 shadow-sm',
+      color: 'bg-yellow-100 text-yellow-900 border-yellow-400 shadow-sm',
       desc: '\u05de\u05e9\u05d9\u05de\u05ea \u05dc\u05d9\u05d1\u05d4 \u05d4\u05de\u05d9\u05d9\u05e6\u05e8\u05ea \u05e2\u05d5\u05de\u05e1 \u05e7\u05d1\u05d5\u05e2, \u05e9\u05d5\u05d7\u05e7 \u05d5\u05d2\u05d1\u05d5\u05d4 \u05d1\u05db\u05dc \u05d7\u05d5\u05d3\u05e9\u05d9 \u05d4\u05e4\u05e2\u05d9\u05dc\u05d5\u05ea.',
     };
   }

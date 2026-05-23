@@ -1,33 +1,34 @@
 export function getIntensityClassification(families, tasks) {
   if (families === 0 || tasks === 0) {
     return {
-      label: '\u05dc\u05dc\u05d0 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea',
-      ratio: '\u2014',
+      label: 'ללא פעילות',
+      ratio: '—',
       color: 'bg-surface-container text-on-surface-variant border-outline-variant/30',
-      desc: '\u05d0\u05d9\u05df \u05e0\u05ea\u05d5\u05e0\u05d9 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea \u05d1\u05ea\u05e7\u05d5\u05e4\u05d4.',
+      desc: 'אין נתוני פעילות בתקופה.',
     };
   }
   const ratio = tasks / families;
   if (ratio > 1.8) {
     return {
-      label: '\u05de\u05d5\u05e8\u05db\u05d1\u05d5\u05ea \u05e7\u05d9\u05e6\u05d5\u05e0\u05d9\u05ea',
+      label: 'מורכבות קיצונית',
       ratio: ratio.toFixed(1),
-      color: 'bg-rose-100 text-rose-800 border-rose-300',
-      desc: '\u05de\u05e1\u05e4\u05e8 \u05de\u05e9\u05d9\u05de\u05d5\u05ea \u05d2\u05d1\u05d5\u05d4 \u05dc\u05de\u05e9\u05e4\u05d7\u05d4 - \u05de\u05e2\u05d9\u05d3 \u05e2\u05dc \"\u05e4\u05d9\u05e0\u05d2-\u05e4\u05d5\u05e0\u05d2\" \u05d0\u05d5 \u05d8\u05d9\u05e4\u05d5\u05dc \u05e9\u05d0\u05d9\u05e0\u05d5 \u05e0\u05e1\u05d2\u05e8.',
+      color: 'bg-yellow-100 text-yellow-900 border-yellow-400',
+      desc:
+        'נפח משימות גבוה ביחס למשפחות בטיפול — מצביע על צורך בייעול תהליך או במענה ממוקד יותר.',
     };
   }
   if (ratio > 1.3) {
     return {
-      label: '\u05e2\u05d5\u05de\u05e1 \u05de\u05de\u05d5\u05e6\u05e2',
+      label: 'עומס ממוצע',
       ratio: ratio.toFixed(1),
       color: 'bg-amber-100 text-amber-800 border-amber-300',
-      desc: '\u05de\u05e2\u05d8 \u05de\u05e2\u05d2\u05dc\u05d9\u05dd \u05e4\u05ea\u05d5\u05d7\u05d9\u05dd \u05d1\u05de\u05e7\u05d1\u05d9\u05dc \u05dc\u05de\u05e9\u05e4\u05d7\u05d4.',
+      desc: 'מעט משימות פתוחות במקביל לכל משפחה בטיפול.',
     };
   }
   return {
-    label: '\u05e9\u05d9\u05e8\u05d5\u05ea \u05d7\u05dc\u05e7 \u05d5\u05d9\u05e9\u05d9\u05e8',
+    label: 'שירות חלק וישיר',
     ratio: ratio.toFixed(1),
     color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    desc: '\u05db\u05de\u05e2\u05d8 \u05db\u05dc \u05de\u05e9\u05d9\u05de\u05d4 \u05de\u05d9\u05d9\u05e6\u05e2\u05ea \u05de\u05e9\u05e4\u05d7\u05d4 \u05e9\u05d5\u05e0\u05d4 (\u05d9\u05d7\u05e1 1:1).',
+    desc: 'כמעט משימה אחת לכל משפחה בטיפול (יחס קרוב ל־1:1).',
   };
 }

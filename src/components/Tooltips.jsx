@@ -13,7 +13,7 @@ export const CustomTooltipMain = ({ active, payload }) => {
         <p className="font-bold text-on-surface">{data.category}</p>
       </div>
       <p className="text-sm text-on-surface-variant mb-1 flex justify-between gap-4">
-        <span>משפחות מלווות:</span>
+        <span>{LABELS.tooltipFamilies}:</span>
         <span className="font-bold text-on-surface">{data.families}</span>
       </p>
       <p className="text-sm text-on-surface-variant flex justify-between gap-4">
@@ -35,8 +35,8 @@ export const CustomTooltipSub = ({ active, payload }) => {
         {data.main}
       </p>
       <p className="text-sm text-on-surface-variant mb-1 flex justify-between gap-4">
-        <span>תפוצה:</span>
-        <span className="font-bold text-on-surface">{data.families} משפחות</span>
+        <span>{LABELS.spreadUniqueFamilies}:</span>
+        <span className="font-bold text-on-surface">{data.families}</span>
       </p>
       <p className="text-sm text-on-surface-variant mb-1 flex justify-between gap-4">
         <span>מאמץ (SLA):</span>

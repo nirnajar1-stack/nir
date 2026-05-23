@@ -5,7 +5,7 @@ import { SERVICE_FILTERS, SERVICE_ZONES } from '../../data/servicesData.js';
 export const ZONE_TONES = {
   auth: { stripe: '#4f5e7f', wash: 'bg-primary-container/45', iconWrap: 'bg-primary text-on-primary', num: 'text-primary' },
   finance: { stripe: '#15803d', wash: 'bg-emerald-100/80', iconWrap: 'bg-emerald-700 text-white', num: 'text-emerald-800' },
-  medical: { stripe: '#9f403d', wash: 'bg-red-50/90', iconWrap: 'bg-tertiary text-on-tertiary', num: 'text-tertiary' },
+  medical: { stripe: '#ca8a04', wash: 'bg-yellow-50/90', iconWrap: 'bg-yellow-600 text-white', num: 'text-yellow-800' },
   transport: { stripe: '#b45309', wash: 'bg-amber-50/90', iconWrap: 'bg-amber-600 text-white', num: 'text-amber-800' },
   resilience: { stripe: '#6b21a8', wash: 'bg-purple-50/80', iconWrap: 'bg-purple-700 text-white', num: 'text-purple-800' },
   logistics: { stripe: '#c2410c', wash: 'bg-orange-50/80', iconWrap: 'bg-orange-600 text-white', num: 'text-orange-800' },

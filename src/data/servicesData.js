@@ -97,7 +97,7 @@ export const SERVICE_ZONES = [
     zoneTitle: 'זירה 3:',
     zoneHighlight: 'סיוע רפואי',
     icon: 'medical_services',
-    accentClass: 'border-r-red-600 bg-red-50/60',
+    accentClass: 'border-r-yellow-600 bg-yellow-50/60',
     keywords: 'רפואי רופא טיפול פסיכותרפיה התפתחות הילד נפש רפואי',
     filterTags: ['רפואי'],
     sections: [

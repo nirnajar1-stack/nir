@@ -1,7 +1,7 @@
 import { LABELS } from '../../data.js';
 
 const TICKER_ITEMS = [
-  { highlight: true, text: `${LABELS.appTitle}: ניתוח מענים מאוחד ינואר–אפריל` },
+  { highlight: true, text: `${LABELS.appTitle}: פריסת משימות ותפוצה לדיוק מענים · ינואר–אפריל` },
   { highlight: false, text: 'הקצאת משאבים: מעבר לפילוח לפי מתכללים הושלם' },
   { highlight: false, text: 'אסטרטגיה: דגש על בירוקרטיה וזכויות ולוגיסטיקה דיגיטלית' },
 ];
