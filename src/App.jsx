@@ -29,11 +29,7 @@ function renderPageContent(group, sub) {
   return <CoordinatorView page={sub} />;
 }
 
-const SHOW_KPIS = (group, sub) => {
-  if (group === 'coordinators') return true;
-  if (group === 'analytics' && sub !== 'spread') return true;
-  return false;
-};
+const SHOW_KPIS = (group) => group === 'coordinators';
 const SHOW_LEGEND = (group, sub) => group === 'analytics' && sub !== 'spread';
 
 export default function App() {
@@ -74,7 +70,7 @@ export default function App() {
                 <p className="mt-1 text-xs text-outline-variant">עודכן לאחרונה: {DATA_UPDATED}</p>
               </motion.header>
 
-              {SHOW_KPIS(group, sub) && (
+              {SHOW_KPIS(group) && (
                 <motion.div variants={pageItemVariants}>
                   <PageKpis group={group} />
                 </motion.div>

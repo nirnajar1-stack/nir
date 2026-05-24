@@ -332,19 +332,20 @@ export default function CoordinatorView({ page = 'overview' }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="bg-surface-container-low p-6 rounded-none shadow-soft border-b-2 border-primary/30">
                 <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-4">התפלגות לפי קטגוריות ראשיות</p>
-                <div className="h-[280px] relative">
+                <div className="h-[380px] relative">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 24, right: 88, bottom: 24, left: 88 }}>
+                    <PieChart margin={{ top: 36, right: 120, bottom: 36, left: 120 }}>
                       <Pie 
                         data={mainStats} 
                         cx="50%" 
                         cy="50%" 
-                        innerRadius={48} 
-                        outerRadius={60} 
-                        paddingAngle={2} 
+                        innerRadius={72} 
+                        outerRadius={100} 
+                        paddingAngle={3} 
                         dataKey="value" 
-                        stroke="none"
-                        label={renderPieLabelOutside}
+                        stroke="#faf9f5"
+                        strokeWidth={2}
+                        label={renderDnaPieLabelOutside}
                         labelLine={false}
                       >
                         {mainStats.map((entry, index) => <Cell key={index} fill={BRAND_CHART_COLORS[index % BRAND_CHART_COLORS.length]} />)}

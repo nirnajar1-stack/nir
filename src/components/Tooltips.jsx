@@ -20,6 +20,7 @@ export const CustomTooltipMain = ({ active, payload }) => {
         <span>זמן טיפול ממוצע:</span>
         <span className="font-bold text-on-surface">{data.avgSla} ימ׳</span>
       </p>
+      <p className="mt-2 text-[10px] leading-relaxed text-outline-variant">{LABELS.slaOpenTasksNote}</p>
     </div>
   );
 };
@@ -48,6 +49,7 @@ export const CustomTooltipSub = ({ active, payload }) => {
           <span className="font-bold text-on-surface">{data.tasks}</span>
         </p>
       )}
+      <p className="mt-2 text-[10px] leading-relaxed text-outline-variant">{LABELS.slaOpenTasksNote}</p>
     </div>
   );
 };

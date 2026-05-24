@@ -379,10 +379,6 @@ export function buildMatrix3DEnvironment(THREE, scene, opts) {
   envGroup.add(floor.mesh);
   disposables.push(floor);
 
-  const ring = createHorizonRing(THREE);
-  envGroup.add(ring.mesh);
-  disposables.push(ring);
-
   const frame = createDataCubeFrame(THREE);
   envGroup.add(frame.group);
   disposables.push(...frame.disposables);

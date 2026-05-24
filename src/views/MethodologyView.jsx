@@ -1,4 +1,4 @@
-import SectionIcon from '../components/ui/SectionIcon.jsx';
+﻿import SectionIcon from '../components/ui/SectionIcon.jsx';
 import { COLORS, LABELS } from '../data.js';
 
 const DATA_COVERAGE_ASSUMPTION = {
@@ -139,7 +139,7 @@ const TAXONOMY_BLOCKS = [
 const METRICS_ITEMS = [
   { term: LABELS.families, desc: 'מספר משפחות ייחודיות בטיפול בתקופה הנבחרת.' },
   { term: LABELS.tasks, desc: 'מספר הפעולות / הפניות שנפתחו וטופלו במערכת — פריסת העומס.' },
-  { term: 'SLA (ימי טיפול)', desc: 'משך זמן ממוצע לסגירת מעגל טיפול במענה.' },
+  { term: 'SLA (ימי טיפול)', desc: LABELS.slaDefinition },
   {
     term: LABELS.intensityCol,
     desc: 'משימות ÷ משפחות בטיפול. מעל 1.8 = מורכבות קיצונית; ~1.5 = עומס ממוצע; קרוב ל־1 = שירות חלק.',
@@ -361,6 +361,8 @@ export default function MethodologyView() {
         <p className="methodology-prose text-sm leading-relaxed text-on-surface-variant">
           המטריצה ממקמת כל תת־מענה לפי תפוצה על משפחות בטיפול (ציר X), מאמץ תפעולי (ציר Y) ונפח משימות (ציר Z בתלת־ממד).
           רביע &quot;העברת שרביט&quot; מסייע לזהות היכן נדרש דיוק מענה והפניה לרפרנט מקצועי.
+          {' '}
+          {LABELS.slaOpenTasksNote}
         </p>
       </section>
 

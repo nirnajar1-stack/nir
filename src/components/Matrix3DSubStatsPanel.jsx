@@ -126,7 +126,7 @@ export default function Matrix3DSubStatsPanel({ item, onClose }) {
           <p className="mb-2 text-[10px] font-bold text-on-surface-variant">מדדי מיקום במטריצה</p>
           <div className="grid grid-cols-3 gap-2">
             <KpiCard label={LABELS.spreadUniqueFamilies} value={item.families} hint="ציר X" />
-            <KpiCard label="SLA" value={item.sla} hint={LABELS.days} />
+            <KpiCard label="SLA" value={item.sla} hint={LABELS.slaOpenTasksNote} />
             <KpiCard label={LABELS.tasks} value={item.tasks} hint="ציר Z" valueClass="text-primary-dim" />
           </div>
         </section>
