@@ -3,6 +3,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
+const iframeEmbedHeaders = {
+  'Content-Security-Policy': 'frame-ancestors *',
+};
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -13,5 +17,9 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    headers: iframeEmbedHeaders,
+  },
+  preview: {
+    headers: iframeEmbedHeaders,
   },
 });

@@ -2,12 +2,14 @@
 import { motion } from 'framer-motion';
 import { getPageMeta } from './navigation.js';
 import { useHashPage } from './hooks/useHashPage.js';
+import { useEmbedMode } from './hooks/useEmbedMode.js';
 import AnalyticsView from './views/AnalyticsView.jsx';
 import CoordinatorView from './views/CoordinatorView.jsx';
 import MethodologyView from './views/MethodologyView.jsx';
 import ServicesViewCards from './views/ServicesViewCards.jsx';
 import ServicesViewAtlas from './views/ServicesViewAtlas.jsx';
 import DevelopmentView from './views/DevelopmentView.jsx';
+import AvshaPresentationView from './views/AvshaPresentationView.jsx';
 import NewsTicker from './components/layout/NewsTicker.jsx';
 import ZenSidebar from './components/layout/ZenSidebar.jsx';
 import ZenHeader from './components/layout/ZenHeader.jsx';
@@ -16,10 +18,12 @@ import Breadcrumbs from './components/layout/Breadcrumbs.jsx';
 import PageKpis from './components/layout/PageKpis.jsx';
 import CategoryLegend from './components/charts/CategoryLegend.jsx';
 import PageTransition, { pageItemVariants } from './components/layout/PageTransition.jsx';
+import EmbedShell from './components/layout/EmbedShell.jsx';
 
 const DATA_UPDATED = '19.05.2026';
 
-function renderPageContent(group, sub) {
+function renderPageContent(group, sub, embed) {
+  if (group === 'presentation') return <AvshaPresentationView embed={embed} />;
   if (group === 'methodology') return <MethodologyView />;
   if (group === 'services') {
     return sub === 'atlas' ? <ServicesViewAtlas /> : <ServicesViewCards />;
@@ -35,7 +39,16 @@ const SHOW_LEGEND = (group, sub) => group === 'analytics' && sub !== 'spread';
 export default function App() {
   const [activePage, setActivePage] = useHashPage();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { isEmbed } = useEmbedMode();
   const { group, sub, pageLabel, subtitle } = getPageMeta(activePage);
+
+  if (isEmbed) {
+    return (
+      <EmbedShell pageKey={activePage}>
+        {renderPageContent(group, sub, true)}
+      </EmbedShell>
+    );
+  }
 
   return (
     <motion.div className="min-h-screen bg-background text-on-background font-body" dir="rtl">
@@ -83,7 +96,7 @@ export default function App() {
               )}
 
               <motion.div variants={pageItemVariants} className="min-h-[200px]">
-                {renderPageContent(group, sub)}
+                {renderPageContent(group, sub, false)}
               </motion.div>
             </PageTransition>
           </PageTransition>

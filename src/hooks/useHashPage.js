@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_PAGE, isValidPageId } from '../navigation.js';
+import { getEmbedPageFromQuery, isEmbedRequest } from '../utils/embedMode.js';
 
 function readPageFromHash() {
+  const pageFromQuery = getEmbedPageFromQuery();
+  if (pageFromQuery) return pageFromQuery;
+
   const raw = window.location.hash.replace(/^#\/?/, '');
   if (raw === 'analytics-methodology') return 'methodology-guide';
   if (raw === 'analytics-overview') return 'analytics-intensity';
@@ -25,9 +29,15 @@ export function useHashPage() {
   useEffect(() => {
     const onHashChange = () => setActivePageState(readPageFromHash());
     window.addEventListener('hashchange', onHashChange);
-    if (!window.location.hash) {
-      window.location.hash = `/${DEFAULT_PAGE}`;
+
+    const initialPage = readPageFromHash();
+    if (!window.location.hash || getEmbedPageFromQuery()) {
+      window.location.hash = `/${initialPage}`;
     }
+    if (isEmbedRequest() && document.documentElement.dataset.embed !== 'true') {
+      document.documentElement.dataset.embed = 'true';
+    }
+
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 

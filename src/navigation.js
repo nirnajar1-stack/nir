@@ -6,6 +6,12 @@ import { LABELS } from './data.js';
 /** @type {NavGroup[]} */
 export const NAV_GROUPS = [
   {
+    id: 'presentation',
+    label: 'מצגת אבשה',
+    icon: 'slideshow',
+    items: [{ id: 'recovery', label: 'מצגת שיקום', icon: 'slideshow' }],
+  },
+  {
     id: 'methodology',
     label: 'מתודולוגיית ניתוח',
     icon: 'menu_book',
@@ -51,6 +57,16 @@ export const NAV_GROUPS = [
 
 export const DEFAULT_PAGE = 'methodology-guide';
 
+/** עמודים מומלצים להטמעה ב-Power BI (ויזואל Web URL) */
+export const EMBED_PAGES = [
+  { id: 'presentation-recovery', label: 'מצגת שיקום אבשה' },
+  { id: 'methodology-guide', label: 'מתודולוגיית הניתוח' },
+  { id: 'coordinators-overview', label: 'תקציר ופעילות מתכללים' },
+  { id: 'analytics-intensity', label: 'פריסה, תפוצה ופילוח' },
+  { id: 'services-cards', label: 'מרכז החלטות — כרטיסים' },
+  { id: 'development-hub', label: 'פיתוח ומיצוי מענים' },
+];
+
 const ALL_PAGE_IDS = NAV_GROUPS.flatMap((g) => g.items.map((i) => `${g.id}-${i.id}`));
 
 export function isValidPageId(pageId) {
@@ -75,7 +91,9 @@ export function getPageMeta(pageId) {
   const item = navGroup?.items.find((i) => i.id === sub);
 
   let subtitle = '';
-  if (group === 'methodology') subtitle = 'עקרונות הניתוח, Taxonomy, הגדרות מדדים ומבנה הלוח';
+  if (group === 'presentation') {
+    subtitle = 'טיוטת מצגת למשרד הכלכלה — תמונת מצב, פגיעה ותכנית שיקום עתידית';
+  } else if (group === 'methodology') subtitle = 'עקרונות הניתוח, Taxonomy, הגדרות מדדים ומבנה הלוח';
   else if (group === 'coordinators') subtitle = 'פילוח לפי מתכללים (ינואר)';
   else if (group === 'analytics') subtitle = LABELS.appSubtitle.split('(')[0].trim();
   else if (group === 'services') {
